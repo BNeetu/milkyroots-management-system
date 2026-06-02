@@ -13,15 +13,14 @@
       }
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "backend/main.py"
+      "source": "/api/(.*)",
+      "destination": "backend/main.py"
     },
-    { "handle": "filesystem" },
     {
-      "src": "/(.*)",
-      "dest": "frontend/dist/milkyroots-frontend/browser/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
