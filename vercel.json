@@ -21,7 +21,7 @@
     { "handle": "filesystem" },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "frontend/dist/milkyroots-frontend/browser/index.html"
     }
   ]
 }
