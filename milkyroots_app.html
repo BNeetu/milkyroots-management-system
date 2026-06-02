@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MilkyRoots — Delivery Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#03045E;--blue:#0077B6;--sky:#0096C7;--pale:#CAF0F8;--cream:#EAF6FF;
+  --white:#F4FAFF;--green:#0CB67A;--red:#E63946;--amber:#F59E0B;--purple:#6366F1;
+  --text:#03045E;--muted:#4A6FA5;--border:rgba(0,119,182,0.15);
+  --shadow:0 4px 20px rgba(0,60,130,0.10);--radius:14px;
+  --font-d:'Playfair Display',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-b);background:var(--white);color:var(--text);min-height:100vh;font-size:15px}
+
+/* ═══ TOPBAR ═══ */
+.topbar{height:58px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 1.2rem;position:sticky;top:0;z-index:200;box-shadow:0 2px 16px rgba(0,0,0,.22)}
+.tb-logo{font-family:var(--font-d);font-size:1.1rem;display:flex;align-items:center;gap:8px;font-weight:700}
+.tb-nav{display:flex;gap:.3rem}
+.tb-btn{background:rgba(255,255,255,.12);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.18);padding:6px 12px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:all .2s;white-space:nowrap}
+.tb-btn:hover,.tb-btn.active{background:rgba(255,255,255,.28);color:#fff}
+.tb-user{font-size:.78rem;opacity:.8;display:flex;align-items:center;gap:.5rem}
+.tb-logout{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff;padding:4px 10px;border-radius:7px;font-size:.72rem;cursor:pointer;font-family:var(--font-b)}
+.tb-logout:hover{background:rgba(255,255,255,.28)}
+
+/* ═══ LAYOUT ═══ */
+.app{display:flex;min-height:calc(100vh - 58px)}
+.sidebar{width:200px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);padding:1rem;position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto}
+.main{flex:1;padding:1.4rem;overflow-x:hidden}
+.sidebar-title{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.6rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
+.snav{display:flex;align-items:center;gap:.5rem;padding:.55rem .7rem;border-radius:9px;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--muted);transition:all .2s;margin-bottom:.15rem;text-decoration:none}
+.snav:hover{background:var(--cream);color:var(--blue)}
+.snav.active{background:linear-gradient(135deg,var(--blue),var(--sky));color:#fff}
+
+/* ═══ PAGES ═══ */
+.page{display:none;max-width:1000px;margin:0 auto}
+.page.active{display:block}
+
+/* ═══ COMMON ═══ */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;flex-wrap:wrap;gap:.5rem}
+.sec-head h2{font-family:var(--font-d);font-size:1.4rem;color:var(--navy)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.8rem;margin-bottom:1.3rem}
+.sc{background:#fff;border-radius:var(--radius);padding:.9rem 1.1rem;border:1px solid var(--border);box-shadow:var(--shadow)}
+.sc .sv{font-family:var(--font-d);font-size:1.6rem;color:var(--blue);line-height:1}
+.sc .sl{font-size:.68rem;color:var(--muted);margin-top:.3rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.sc.g .sv{color:var(--green)}.sc.r .sv{color:var(--red)}.sc.a .sv{color:var(--amber)}.sc.p .sv{color:var(--purple)}
+
+/* ═══ BUTTONS ═══ */
+.btn{display:inline-flex;align-items:center;gap:.35rem;padding:8px 16px;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer;border:none;font-family:var(--font-b);transition:all .2s}
+.btn-blue{background:linear-gradient(135deg,var(--blue),var(--sky));color:#fff;box-shadow:0 3px 12px rgba(0,119,182,.25)}
+.btn-blue:hover{opacity:.9;transform:translateY(-1px)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{opacity:.9}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{opacity:.9}
+.btn-ghost{background:transparent;color:var(--blue);border:1.5px solid var(--border)}
+.btn-ghost:hover{background:var(--cream)}
+.btn-amber{background:var(--amber);color:#fff}
+.btn-sm{padding:5px 11px;font-size:.74rem;border-radius:8px}
+.btn-lg{padding:11px 22px;font-size:.9rem}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
+
+/* ═══ MODAL ═══ */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,15,50,.55);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:20px;padding:1.8rem;width:min(580px,97vw);max-height:93vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.22)}
+.modal h3{font-family:var(--font-d);font-size:1.2rem;color:var(--navy);margin-bottom:1.1rem}
+.fg{margin-bottom:.8rem}
+.fg label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em}
+.fg input,.fg select,.fg textarea{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:.88rem;font-family:var(--font-b);color:var(--text);outline:none;transition:border-color .2s;background:#fff}
+.fg input:focus,.fg select:focus{border-color:var(--blue)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.modal-footer{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--border)}
+
+/* ═══ BADGE ═══ */
+.badge{display:inline-block;padding:2px 9px;border-radius:50px;font-size:.68rem;font-weight:700}
+.badge-g{background:#D1FAE5;color:#065F46}.badge-r{background:#FEE2E2;color:#991B1B}
+.badge-a{background:#FEF3C7;color:#92400E}.badge-b{background:#DBEAFE;color:#1D4ED8}
+.badge-p{background:#EDE9FE;color:#6D28D9}
+
+/* ═══ TOAST ═══ */
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:.4rem}
+.toast{background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-size:.84rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);animation:slideIn .3s ease;max-width:300px}
+.toast.ok{background:var(--green)}.toast.err{background:var(--red)}.toast.warn{background:var(--amber)}
+@keyframes slideIn{from{transform:translateX(120px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ═══ LOGIN ═══ */
+.login-page{min-height:100vh;background:linear-gradient(135deg,var(--navy),var(--blue),#00B4D8);display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-card{background:#fff;border-radius:20px;padding:2.5rem;width:min(400px,100%);box-shadow:0 24px 64px rgba(0,0,0,.25);text-align:center}
+.login-logo{font-size:3.5rem;margin-bottom:.5rem}
+.login-title{font-family:var(--font-d);font-size:1.7rem;color:var(--navy);margin-bottom:.3rem}
+.login-sub{font-size:.82rem;color:var(--muted);margin-bottom:1.8rem}
+.login-err{background:#FEE2E2;color:#991B1B;border-radius:8px;padding:8px 12px;font-size:.82rem;margin-bottom:.8rem}
+.login-footer{margin-top:1.8rem;font-size:.75rem;color:var(--muted);line-height:2}
+
+/* ═══ DASHBOARD ═══ */
+.welcome{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border-radius:16px;padding:1.4rem 1.8rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.3rem;flex-wrap:wrap}
+.welcome h1{font-family:var(--font-d);font-size:1.5rem;margin-bottom:.25rem}
+.welcome p{font-size:.82rem;opacity:.75}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.8rem;margin-bottom:1.3rem}
+.qa-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;cursor:pointer;transition:all .2s;display:block;text-decoration:none}
+.qa-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,60,130,.12)}
+.qa-icon{font-size:1.8rem;display:block;margin-bottom:.4rem}
+.qa-label{font-weight:700;color:var(--navy);font-size:.9rem;margin-bottom:.15rem}
+.qa-sub{font-size:.74rem;color:var(--muted);line-height:1.5}
+.price-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.6rem}
+.price-item{display:flex;align-items:center;gap:.6rem;background:var(--cream);border-radius:10px;padding:.6rem .9rem}
+.price-emoji{font-size:1.4rem}
+.price-name{font-size:.8rem;font-weight:600;color:var(--navy)}
+.price-val{font-size:.72rem;color:var(--blue);font-weight:700;margin-top:1px}
+
+/* ═══ CUSTOMERS ═══ */
+.search-input{padding:7px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:.85rem;font-family:var(--font-b);outline:none;width:200px}
+.search-input:focus{border-color:var(--blue)}
+.cust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:.9rem}
+.cust-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;transition:all .2s}
+.cust-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,60,130,.13)}
+.cc-top{padding:.9rem 1.1rem;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem}
+.cc-name{font-family:var(--font-d);font-size:1rem;font-weight:700}
+.cc-meta{font-size:.7rem;opacity:.75;margin-top:2px}
+.cc-bal{font-family:var(--font-d);font-size:.9rem;font-weight:700;white-space:nowrap;background:rgba(255,255,255,.15);border-radius:8px;padding:3px 9px;text-align:right}
+.cc-bal.due{background:rgba(230,57,70,.3)}.cc-bal.ok{background:rgba(12,182,122,.3)}
+.cc-body{padding:.8rem 1.1rem}
+.cc-prods{margin-bottom:.7rem}
+.cp-row{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;padding:.28rem 0;border-bottom:1px solid rgba(0,119,182,.07);color:var(--text)}
+.cp-row:last-child{border-bottom:none}
+.cp-cost{font-weight:700;color:var(--blue)}
+.cc-foot{display:flex;align-items:center;gap:.35rem;padding:.6rem 1.1rem;border-top:1px solid var(--border);flex-wrap:wrap}
+
+/* ═══ SUBSCRIPTION ROWS IN MODAL ═══ */
+.subs-box{background:var(--cream);border-radius:12px;padding:.9rem;margin-bottom:.8rem;border:1px solid rgba(0,119,182,.12)}
+.subs-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem}
+.subs-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.sub-row{display:flex;align-items:center;gap:.4rem;margin-bottom:.45rem;flex-wrap:wrap}
+.sub-row select,.sub-row input{padding:5px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:.8rem;font-family:var(--font-b);outline:none;background:#fff}
+.sub-row select.prod-sel{flex:1;min-width:140px}
+.sub-row select.slot-sel{width:120px}
+.sub-row input.qty-in{width:65px}
+.sub-unit{font-size:.72rem;color:var(--muted);min-width:16px}
+.sub-cost{font-weight:700;color:var(--blue);font-size:.8rem;min-width:52px;text-align:right}
+.subs-total{text-align:right;font-size:.82rem;color:var(--navy);padding-top:.5rem;border-top:1px solid rgba(0,119,182,.1);margin-top:.4rem}
+.subs-total strong{font-family:var(--font-d);color:var(--blue);font-size:.95rem}
+
+/* ═══ DELIVERY ═══ */
+.seller-bar{display:flex;align-items:center;gap:.6rem;margin-bottom:1.1rem;background:#fff;border-radius:10px;padding:.55rem 1rem;border:1px solid var(--border);width:fit-content}
+.seller-bar label{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.seller-bar input{border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-family:var(--font-b);font-size:.88rem;color:var(--navy);font-weight:600;outline:none;width:130px}
+.del-cards{display:flex;flex-direction:column;gap:.9rem}
+.del-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.dc-head{display:flex;align-items:center;gap:.8rem;padding:.85rem 1.1rem;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;flex-wrap:wrap}
+.dc-name{font-family:var(--font-d);font-size:1rem;flex:1}
+.dc-area{font-size:.72rem;opacity:.7}
+.dc-bal{background:rgba(255,255,255,.15);border-radius:8px;padding:3px 10px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.dc-bal.due{background:rgba(230,57,70,.3)}.dc-bal.ok{background:rgba(12,182,122,.3)}
+.slot-pills{display:flex;gap:.35rem}
+.sp{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:50px;background:rgba(255,255,255,.15)}
+.sp.done{background:rgba(12,182,122,.3)}
+
+/* SLOT SECTIONS */
+.slot-sec{border-bottom:1px solid var(--border)}
+.slot-sec:last-child{border-bottom:none}
+.morning-sec{border-left:4px solid var(--amber)}
+.evening-sec{border-left:4px solid var(--purple)}
+.slot-hd{display:flex;align-items:center;gap:.7rem;padding:.75rem 1.1rem;cursor:pointer;transition:background .15s;user-select:none}
+.slot-hd:hover{background:#F4FAFF}
+.slot-title{flex:1;font-size:.88rem;color:var(--navy);display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.slot-pill{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:50px}
+.sp-del{background:#D1FAE5;color:#065F46}.sp-pend{background:#FEF3C7;color:#92400E}
+.slot-sum{font-size:.8rem;color:var(--muted);font-weight:600}
+.chevron{font-size:.9rem;color:var(--muted);transition:transform .25s;display:inline-block}
+.chevron.open{transform:rotate(180deg)}
+.slot-body{display:none;padding:.8rem 1.1rem;background:#FAFCFF}
+.slot-body.open{display:block}
+
+/* Delivered info */
+.del-info{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.6rem}
+.di-row{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:8px;padding:.4rem .7rem;border:1px solid var(--border);font-size:.82rem}
+.di-total{text-align:right;font-family:var(--font-d);font-size:1rem;color:var(--green);font-weight:700;margin-bottom:.5rem}
+.wa-btn{background:#25D366;color:#fff;border:none;border-radius:8px;padding:6px 13px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:var(--font-b);transition:opacity .2s}
+.wa-btn:hover{opacity:.88}
+
+/* Product form */
+.prod-list{display:flex;flex-direction:column;gap:.45rem;margin-bottom:.8rem}
+.prod-row{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:.6rem;background:#fff;border-radius:9px;padding:.55rem .8rem;border:1px solid var(--border)}
+.prod-info{display:flex;align-items:center;gap:.5rem}
+.prod-emoji{font-size:1.3rem}
+.prod-name{font-size:.85rem;font-weight:600;color:var(--navy)}
+.prod-price{font-size:.7rem;color:var(--muted)}
+.qty-ctrl{display:flex;align-items:center;gap:.3rem}
+.qb{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--blue);font-size:1rem;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.qb:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.qv{min-width:26px;text-align:center;font-weight:700;font-size:.88rem;color:var(--navy)}
+.qu{font-size:.7rem;color:var(--muted);min-width:16px}
+.pt{font-weight:700;color:var(--blue);font-size:.88rem;min-width:44px;text-align:right}
+.del-total-row{display:flex;justify-content:space-between;align-items:center;background:var(--pale);border-radius:9px;padding:.6rem .9rem;margin-bottom:.8rem;font-size:.88rem;color:var(--navy)}
+.del-total-row strong{font-family:var(--font-d);font-size:1.1rem}
+.action-row{display:flex;gap:.5rem}
+.skip-btn{background:transparent;border:1.5px solid var(--border);border-radius:9px;padding:9px 14px;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer;font-family:var(--font-b);transition:all .2s}
+.skip-btn:hover{background:#f1f5f9}
+.deliver-btn{flex:1;background:linear-gradient(135deg,#0CB67A,#059669);border:none;border-radius:9px;padding:9px 16px;font-size:.84rem;font-weight:700;color:#fff;cursor:pointer;font-family:var(--font-b);transition:all .2s;box-shadow:0 3px 12px rgba(12,182,122,.3)}
+.deliver-btn:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
+.deliver-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* ═══ BILLING ═══ */
+.bill-list{display:flex;flex-direction:column;gap:.8rem}
+.bill-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.bill-card.has-due{border-left:4px solid var(--red)}
+.bc-hd{display:flex;align-items:center;gap:.8rem;padding:.85rem 1.1rem;cursor:pointer;transition:background .15s;flex-wrap:wrap}
+.bc-hd:hover{background:#F4FAFF}
+.bc-n{font-weight:700;color:var(--navy);font-size:.92rem}
+.bc-m{font-size:.7rem;color:var(--muted);margin-top:2px}
+.bc-pills{display:flex;gap:.25rem;flex-wrap:wrap;flex:1}
+.bc-pill{background:var(--cream);border-radius:6px;padding:2px 7px;font-size:.7rem;font-weight:600;color:var(--blue)}
+.bc-amt{font-family:var(--font-d);font-size:1.05rem;font-weight:700;white-space:nowrap}
+.bc-amt.due{color:var(--red)}.bc-amt.ok{color:var(--green)}
+.bc-acts{display:flex;align-items:center;gap:.35rem}
+.bc-det{display:none;padding:.9rem 1.1rem;border-top:1px solid var(--border);background:#FAFCFF}
+.bc-det.open{display:block}
+.bd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.6rem;margin-bottom:.8rem}
+.bd-i{background:#fff;border-radius:9px;padding:.6rem .8rem;border:1px solid var(--border);text-align:center}
+.bd-v{font-family:var(--font-d);font-size:1.05rem;color:var(--blue);line-height:1}
+.bd-l{font-size:.65rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+.prod-breakdown{display:flex;flex-direction:column;gap:.3rem}
+.pb-row{display:flex;gap:.8rem;align-items:center;font-size:.8rem;padding:.3rem .6rem;border-radius:7px;background:var(--cream);flex-wrap:wrap}
+.pb-cost{font-weight:700;color:var(--blue);margin-left:auto}
+
+/* ═══ LEDGER ═══ */
+.ledger-page{max-width:860px;margin:0 auto}
+.ledger-header{display:flex;align-items:flex-start;gap:.9rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.lh-info h1{font-family:var(--font-d);font-size:1.4rem;color:var(--navy)}
+.lh-info p{font-size:.78rem;color:var(--muted);margin-top:.25rem}
+.lh-bal{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border-radius:12px;padding:.7rem 1.1rem;text-align:center;min-width:120px}
+.lh-bal .lbl{font-size:.65rem;opacity:.7;text-transform:uppercase;letter-spacing:.07em}
+.lh-bal .val{font-family:var(--font-d);font-size:1.1rem;font-weight:700;margin-top:2px}
+.lh-bal.due .val{color:#FCA5A5}
+.pay-strip{background:var(--cream);border-radius:12px;padding:1rem;margin-bottom:1.1rem;border:1px solid rgba(0,119,182,.15)}
+.pay-strip-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.7rem}
+.pay-form{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.pay-form input,.pay-form select{padding:7px 11px;border:1.5px solid rgba(0,119,182,.2);border-radius:9px;font-size:.84rem;font-family:var(--font-b);outline:none;background:#fff;flex:1;min-width:110px}
+.ls-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.5rem}
+.ledger-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:1rem}
+.de{display:grid;grid-template-columns:auto auto auto 1fr auto;align-items:center;gap:.6rem;padding:.55rem 1rem;border-bottom:1px solid rgba(0,119,182,.07);flex-wrap:wrap}
+.de:last-child{border-bottom:none}
+.de-date{font-size:.78rem;font-weight:600;color:var(--navy);white-space:nowrap}
+.de-slot{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:50px;white-space:nowrap}
+.de-slot.m{background:#FEF3C7;color:#92400E}.de-slot.e{background:#EDE9FE;color:#6D28D9}
+.de-items{display:flex;gap:.25rem;flex-wrap:wrap}
+.de-item{background:var(--cream);border-radius:5px;padding:1px 7px;font-size:.72rem;color:var(--navy)}
+.de-amt{font-family:var(--font-d);font-weight:700;color:var(--blue);font-size:.9rem;text-align:right}
+.pe{display:flex;gap:.7rem;align-items:center;padding:.5rem 1rem;border-bottom:1px solid rgba(0,119,182,.07);font-size:.82rem;flex-wrap:wrap}
+.pe:last-child{border-bottom:none}
+
+/* ═══ CALENDAR ═══ */
+.cal-wrap{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-top:1rem}
+.cal-top{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:.9rem 1.1rem;display:flex;align-items:center;justify-content:space-between}
+.cal-top h3{font-family:var(--font-d);font-size:1rem}
+.cal-nav{display:flex;align-items:center;gap:.6rem}
+.cal-nav button{background:rgba(255,255,255,.2);border:none;color:#fff;width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:1rem;transition:background .2s}
+.cal-nav button:hover{background:rgba(255,255,255,.35)}
+.cal-body{padding:.9rem 1rem}
+.cal-sel{width:100%;padding:7px 11px;border:1px solid var(--border);border-radius:8px;font-size:.84rem;font-family:var(--font-b);outline:none;margin-bottom:.8rem}
+.cal-dh{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
+.cal-dh div{text-align:center;font-size:.65rem;font-weight:700;color:var(--muted);padding:.2rem 0}
+.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cd{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:600;border:1px solid transparent;cursor:pointer;transition:all .15s}
+.cd.empty,.cd.future{background:#f8fafc;color:#94a3b8;cursor:default;border:none}
+.cd.present{background:#D1FAE5;color:#065F46;border-color:#6EE7B7}
+.cd.absent{background:#FEE2E2;color:#991B1B;border-color:#FCA5A5}
+.cd.nodata{background:var(--cream);color:var(--muted);border-color:var(--border)}
+.cd.today-cell{box-shadow:0 0 0 2px var(--blue)}
+.cal-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-top:.7rem}
+.cs-i{background:var(--pale);border-radius:8px;padding:.45rem;text-align:center}
+.cs-v{font-family:var(--font-d);font-size:.95rem;color:var(--blue)}
+.cs-l{font-size:.62rem;color:var(--muted)}
+.cal-leg{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:.5rem;font-size:.72rem}
+.cal-leg span{display:flex;align-items:center;gap:.3rem}
+.ldot{width:10px;height:10px;border-radius:3px}
+
+/* ═══ EMPTY ═══ */
+.empty{text-align:center;padding:2.5rem;color:var(--muted)}
+.empty .ei{font-size:2.5rem;display:block;opacity:.3;margin-bottom:.6rem}
+
+
+/* ═══ REPORTS ═══ */
+.report-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-top:1rem}
+.rep-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.rep-head{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:.8rem 1.1rem}
+.rep-head h4{font-family:var(--font-d);font-size:1rem}
+.rep-head p{font-size:.72rem;opacity:.7;margin-top:2px}
+.rep-body{padding:.9rem 1rem}
+.rep-row{display:flex;justify-content:space-between;align-items:center;padding:.45rem 0;border-bottom:1px solid rgba(0,119,182,.07);font-size:.84rem}
+.rep-row:last-child{border-bottom:none}
+.rep-name{font-weight:600;color:var(--navy)}
+.rep-val{color:var(--blue);font-weight:700}
+.rep-bar{height:5px;background:var(--cream);border-radius:3px;overflow:hidden;width:70px;margin-left:.5rem}
+.rep-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--sky));border-radius:3px}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{padding:1rem}
+  .frow{grid-template-columns:1fr}
+  .prod-row{grid-template-columns:1fr auto}
+  .de{grid-template-columns:auto auto 1fr auto}
+}
+@media(max-width:500px){
+  .tb-nav .tb-btn span{display:none}
+  .stats{grid-template-columns:1fr 1fr}
+  .cust-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="login-logo">🐄</div>
+    <h1 class="login-title">MilkyRoots Admin</h1>
+    <p class="login-sub">Beawar, Rajasthan — Seller Dashboard</p>
+    <div class="fg"><label>Username</label><input id="loginUser" value="neetu" placeholder="Enter username"></div>
+    <div class="fg"><label>Password</label><input id="loginPass" type="password" value="milky123" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div id="loginErr" class="login-err" style="display:none"></div>
+    <button class="btn btn-blue btn-lg" style="width:100%" onclick="doLogin()">🔓 Login to Dashboard</button>
+    <div class="login-footer">
+      <p>Default: <strong>neetu</strong> / <strong>milky123</strong></p>
+      <p>🐄 MilkyRoots — Pure Dairy, Beawar &nbsp;|&nbsp; 📞 89495 53581</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP SHELL ═══════════════════ -->
+<div id="appShell" style="display:none">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-logo">🐄 <span>MilkyRoots</span></div>
+    <div class="tb-nav">
+      <button class="tb-btn active" onclick="goPage('dashboard')">📊 <span>Dashboard</span></button>
+      <button class="tb-btn" onclick="goPage('delivery')">🛵 <span>Delivery</span></button>
+      <button class="tb-btn" onclick="goPage('customers')">👥 <span>Customers</span></button>
+      <button class="tb-btn" onclick="goPage('billing')">💰 <span>Billing</span></button>
+      <button class="tb-btn" onclick="goPage('calendar')">📅 <span>Calendar</span></button>
+      <button class="tb-btn" onclick="goPage('reports')">📈 <span>Reports</span></button>
+    </div>
+    <div class="tb-user">
+      <span id="tbUser">👤 Neetu</span>
+      <button class="tb-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-title">Menu</div>
+      <a class="snav active" onclick="goPage('dashboard')">📊 Dashboard</a>
+      <a class="snav" onclick="goPage('delivery')">🛵 Daily Delivery</a>
+      <a class="snav" onclick="goPage('customers')">👥 Customers</a>
+      <a class="snav" onclick="goPage('billing')">💰 Billing</a>
+      <a class="snav" onclick="goPage('calendar')">📅 Calendar</a>
+      <a class="snav" onclick="goPage('reports')">📈 Reports</a>
+      <br>
+      <div class="sidebar-title">Quick Info</div>
+      <div id="sideInfo" style="font-size:.76rem;color:var(--muted);line-height:2.2"></div>
+    </div>
+
+    <div class="main">
+
+      <!-- ════ DASHBOARD ════ -->
+      <div class="page active" id="page-dashboard">
+        <div class="welcome">
+          <div><h1 id="welcomeMsg">Good Morning 🌅</h1><p id="welcomeDate"></p></div>
+          <button class="btn btn-green btn-lg" onclick="goPage('delivery')">🛵 Open Delivery Checklist</button>
+        </div>
+        <div class="stats" id="dashStats"></div>
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.7rem">Quick Actions</div>
+        <div class="qa-grid">
+          <div class="qa-card" onclick="goPage('delivery')"><span class="qa-icon">🛵</span><div class="qa-label">Daily Delivery</div><div class="qa-sub">Mark deliveries & send WhatsApp</div></div>
+          <div class="qa-card" onclick="goPage('customers');setTimeout(()=>openCustModal(),200)"><span class="qa-icon">➕</span><div class="qa-label">Add Customer</div><div class="qa-sub">Register a new customer</div></div>
+          <div class="qa-card" onclick="goPage('billing')"><span class="qa-icon">💰</span><div class="qa-label">Billing</div><div class="qa-sub">Collect payments & view dues</div></div>
+          <div class="qa-card" onclick="goPage('calendar')"><span class="qa-icon">📅</span><div class="qa-label">Calendar</div><div class="qa-sub">Monthly attendance view</div></div>
+        </div>
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.7rem;margin-top:.5rem">📋 Product Pricing Reference</div>
+        <div class="price-grid">
+          <div class="price-item"><span class="price-emoji">🥛</span><div><div class="price-name">Fresh Cow Milk</div><div class="price-val">₹70 / Litre</div></div></div>
+          <div class="price-item"><span class="price-emoji">🍶</span><div><div class="price-name">Homemade Curd</div><div class="price-val">₹80 / kg &nbsp;(500g = ₹40)</div></div></div>
+          <div class="price-item"><span class="price-emoji">🥤</span><div><div class="price-name">Fresh Buttermilk</div><div class="price-val">₹20 / 500ml</div></div></div>
+          <div class="price-item"><span class="price-emoji">✨</span><div><div class="price-name">Bilona Ghee</div><div class="price-val">₹900 / 500g</div></div></div>
+        </div>
+      </div>
+
+      <!-- ════ CUSTOMERS ════ -->
+      <div class="page" id="page-customers">
+        <div class="sec-head">
+          <h2>👥 Customers</h2>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <input class="search-input" id="custSearch" placeholder="🔍 Search..." oninput="renderCustomers()">
+            <button class="btn btn-blue" onclick="openCustModal()">+ Add Customer</button>
+          </div>
+        </div>
+        <div class="stats" id="custStats"></div>
+        <div class="cust-grid" id="custGrid"></div>
+      </div>
+
+      <!-- ════ DELIVERY ════ -->
+      <div class="page" id="page-delivery">
+        <div class="sec-head">
+          <h2>🛵 Daily Delivery</h2>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <button class="btn btn-ghost btn-sm" onclick="changeDelDate(-1)">◀</button>
+            <input type="date" id="delDate" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font-b);font-size:.84rem;outline:none" onchange="renderDelivery()">
+            <button class="btn btn-ghost btn-sm" onclick="changeDelDate(1)">▶</button>
+          </div>
+        </div>
+        <div class="seller-bar">
+          <label>Delivered by:</label>
+          <input id="sellerName" value="Neetu" placeholder="Seller name">
+        </div>
+        <div class="stats" id="delStats"></div>
+        <div class="del-cards" id="delCards"></div>
+      </div>
+
+      <!-- ════ BILLING ════ -->
+      <div class="page" id="page-billing">
+        <div class="sec-head">
+          <h2>💰 Billing & Payments</h2>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <select id="billCycle" onchange="renderBilling()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font-b);font-size:.82rem;outline:none">
+              <option value="">All Cycles</option><option value="weekly">Weekly</option><option value="15days">15 Days</option><option value="monthly">Monthly</option>
+            </select>
+            <select id="billStat" onchange="renderBilling()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font-b);font-size:.82rem;outline:none">
+              <option value="">All</option><option value="due">Has Due</option><option value="clear">All Clear</option>
+            </select>
+          </div>
+        </div>
+        <div class="stats" id="billStats"></div>
+        <div class="bill-list" id="billList"></div>
+      </div>
+
+      <!-- ════ LEDGER ════ -->
+      <div class="page" id="page-ledger">
+        <div class="ledger-page">
+          <button class="btn btn-ghost btn-sm" onclick="goPage('customers')" style="margin-bottom:1rem">← Back to Customers</button>
+          <div class="ledger-header" id="ledgerHeader"></div>
+          <div class="stats" id="ledgerStats"></div>
+          <div id="paySection"></div>
+          <div class="ls-title">📦 Delivery History</div>
+          <div class="ledger-card" id="ledgerDels"></div>
+          <div class="ls-title" style="margin-top:1rem">💳 Payment History</div>
+          <div class="ledger-card" id="ledgerPays"></div>
+        </div>
+      </div>
+
+      <!-- ════ CALENDAR ════ -->
+      <div class="page" id="page-calendar">
+        <div class="sec-head"><h2>📅 Attendance Calendar</h2></div>
+        <div class="cal-wrap">
+          <div class="cal-top">
+            <h3>Monthly Delivery View</h3>
+            <div class="cal-nav">
+              <button onclick="calShift(-1)">◀</button>
+              <span id="calLabel" style="font-weight:700;min-width:130px;text-align:center;font-size:.9rem"></span>
+              <button onclick="calShift(1)">▶</button>
+            </div>
+          </div>
+          <div class="cal-body">
+            <select class="cal-sel" id="calCust" onchange="renderCal()">
+              <option value="">— Select customer to view attendance —</option>
+            </select>
+            <div class="cal-dh"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+            <div class="cal-g" id="calGrid"></div>
+            <div class="cal-sum" id="calSum"></div>
+            <div class="cal-leg">
+              <span><div class="ldot" style="background:#D1FAE5;border:1px solid #6EE7B7"></div>Delivered</span>
+              <span><div class="ldot" style="background:#FEE2E2;border:1px solid #FCA5A5"></div>Not Delivered</span>
+              <span><div class="ldot" style="background:var(--cream);border:1px solid var(--border)"></div>No Record</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ════ REPORTS ════ -->
+      <div class="page" id="page-reports">
+        <div class="sec-head">
+          <h2>📈 Reports & Analytics</h2>
+          <select id="reportMonth" onchange="renderReports()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:var(--font-b);font-size:.84rem;outline:none;background:#fff"></select>
+        </div>
+        <div class="stats" id="repStats"></div>
+        <div class="report-grid" id="repGrid"></div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /app -->
+</div><!-- /appShell -->
+
+<!-- ════ CUSTOMER MODAL ════ -->
+<div class="modal-bg" id="custModal">
+  <div class="modal" style="width:min(620px,97vw)">
+    <h3 id="custModalTitle">Add New Customer</h3>
+    <div class="frow">
+      <div class="fg"><label>Full Name *</label><input id="f-name" placeholder="e.g. Garvit Bhati"></div>
+      <div class="fg"><label>Phone Number *</label><input type="tel" id="f-phone" placeholder="10-digit number"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>WhatsApp Number *</label><input type="tel" id="f-cwa" placeholder="For notifications"></div>
+      <div class="fg"><label>Area / Locality *</label><input id="f-area" placeholder="e.g. Gandhi Colony"></div>
+    </div>
+    <div class="fg"><label>Full Address *</label><input id="f-addr" placeholder="House no, street..."></div>
+    <div class="frow">
+      <div class="fg"><label>Payment Cycle *</label>
+        <select id="f-cycle"><option value="monthly">Monthly</option><option value="weekly">Weekly</option><option value="15days">Every 15 Days</option></select>
+      </div>
+      <div class="fg"><label>Start Date *</label><input type="date" id="f-start"></div>
+    </div>
+    <div class="fg"><label>Delivery Man WhatsApp</label><input type="tel" id="f-dwa" placeholder="Delivery person number"></div>
+    <!-- SUBSCRIPTIONS -->
+    <div class="subs-box">
+      <div class="subs-hd">
+        <div class="subs-title">📦 Daily Subscriptions</div>
+        <button class="btn btn-ghost btn-sm" onclick="addSubRow()">+ Add Product</button>
+      </div>
+      <div id="subRows"></div>
+      <div class="subs-total" id="subsTotal" style="display:none">Daily Total: <strong id="subsTotalVal">₹0</strong></div>
+    </div>
+    <div class="fg"><label>Notes</label><input id="f-notes" placeholder="Special instructions..."></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCustModal()">Cancel</button>
+      <button class="btn btn-blue" onclick="saveCust()">💾 Save Customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PAY MODAL ════ -->
+<div class="modal-bg" id="payModal">
+  <div class="modal" style="width:min(440px,97vw)">
+    <h3>💰 Collect Payment</h3>
+    <div id="payModalInfo"></div>
+    <div class="frow">
+      <div class="fg"><label>Amount *</label><input type="number" id="pm-amt" placeholder="₹ Amount"></div>
+      <div class="fg"><label>Method</label>
+        <select id="pm-meth"><option value="cash">💵 Cash</option><option value="gpay">📱 GPay</option><option value="phonepe">📱 PhonePe</option><option value="paytm">📱 Paytm</option><option value="bank">🏦 Bank Transfer</option></select>
+      </div>
+    </div>
+    <div class="fg"><label>Date</label><input type="date" id="pm-date"></div>
+    <div class="fg"><label>Note (optional)</label><input id="pm-note" placeholder="e.g. Partial payment"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('payModal')">Cancel</button>
+      <button class="btn btn-green" onclick="confirmPay()">✅ Confirm Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE — localStorage persistence
+// ═══════════════════════════════════════════════════════
+var DB = {
+  customers:  ls('mr3_customers', []),
+  deliveries: ls('mr3_deliveries', []),
+  payments:   ls('mr3_payments', []),
+  confirmed:  ls('mr3_confirmed', {}),
+};
+
+var PRODUCTS = [
+  {id:1, name:'Fresh Cow Milk',   emoji:'🥛', unit:'L',  price:70,   minQty:0.5, step:0.5},
+  {id:2, name:'Homemade Curd',    emoji:'🍶', unit:'kg', price:80,   minQty:0.5, step:0.5},
+  {id:3, name:'Fresh Buttermilk', emoji:'🥤', unit:'ml', price:0.04, minQty:500, step:500},
+  {id:4, name:'Bilona Ghee',      emoji:'✨', unit:'g',  price:1.8,  minQty:250, step:250},
+];
+
+var SELLER = {name:'Neetu', pass:'milky123'};
+var editingCustId = null;
+var payingCustId  = null;
+var ledgerCustId  = null;
+var calYear = new Date().getFullYear();
+var calMonth = new Date().getMonth();
+var subRowCount = 0;
+var delSlotState = {}; // {custId_slot: {expanded, draft}}
+
+function ls(k, def){ try{ return JSON.parse(localStorage.getItem(k)||'null')||def; }catch(e){ return def; } }
+function save(){ ['customers','deliveries','payments','confirmed'].forEach(k=>localStorage.setItem('mr3_'+k, JSON.stringify(DB[k]))); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function fmtDate(d){ if(!d)return''; var p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function fmtMoney(n){ return '₹'+(Math.round(n)||0); }
+function monthName(m){ return ['January','February','March','April','May','June','July','August','September','October','November','December'][m]; }
+function prodById(id){ return PRODUCTS.find(p=>p.id==id); }
+function custById(id){ return DB.customers.find(c=>c.id===id); }
+function getProduct(id){ return PRODUCTS.find(p=>p.id==id); }
+
+// Balance = sum of all deliveries - sum of all payments
+function custBalance(cid){
+  var charged = DB.deliveries.filter(d=>d.custId===cid).reduce((s,d)=>s+d.total,0);
+  var paid    = DB.payments.filter(p=>p.custId===cid).reduce((s,p)=>s+p.amount,0);
+  return Math.round((charged-paid)*100)/100;
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ═══════════════════════════════════════════════════════
+function doLogin(){
+  var u=document.getElementById('loginUser').value.trim();
+  var p=document.getElementById('loginPass').value.trim();
+  if(u===SELLER.name && p===SELLER.pass){
+    document.getElementById('loginPage').style.display='none';
+    document.getElementById('appShell').style.display='block';
+    document.getElementById('tbUser').textContent='👤 '+u.charAt(0).toUpperCase()+u.slice(1);
+    initApp();
+  } else {
+    var e=document.getElementById('loginErr');
+    e.style.display='block';
+    e.textContent='❌ Wrong username or password. Try: neetu / milky123';
+  }
+}
+function doLogout(){
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('loginPage').style.display='flex';
+}
+
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+function goPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tb-btn').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.snav').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('[onclick="goPage(\''+p+'\')"]').forEach(el=>el.classList.add('active'));
+  if(p==='dashboard') renderDashboard();
+  if(p==='customers') renderCustomers();
+  if(p==='delivery')  { document.getElementById('delDate').value=today(); renderDelivery(); }
+  if(p==='billing')   renderBilling();
+  if(p==='calendar')  { populateCalSel(); renderCal(); }
+  if(p==='reports')   { initReportMonths(); renderReports(); }
+  if(p==='ledger')    renderLedger();
+  updateSidebar();
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT APP
+// ═══════════════════════════════════════════════════════
+function initApp(){
+  // Seed sample data if empty
+  if(!DB.customers.length){
+    DB.customers=[
+      {id:'c1',name:'Garvit Bhati',phone:'9876543210',cwa:'9876543210',dwa:'8949553581',area:'Gandhi Colony',addr:'12 Gandhi Nagar',cycle:'monthly',start:'2025-01-01',notes:'Morning delivery preferred',
+       subs:[{pid:1,slot:'morning',qty:1},{pid:2,slot:'morning',qty:0.5},{pid:1,slot:'evening',qty:1}]},
+      {id:'c2',name:'Ramesh Sharma',phone:'9988776655',cwa:'9988776655',dwa:'8949553581',area:'Subhash Nagar',addr:'45 Subhash Road',cycle:'weekly',start:'2025-01-01',notes:'',
+       subs:[{pid:1,slot:'morning',qty:2}]},
+      {id:'c3',name:'Sunita Agarwal',phone:'9123456789',cwa:'9123456789',dwa:'8949553581',area:'Rani Bazaar',addr:'7 Rani Market',cycle:'15days',start:'2025-01-01',notes:'',
+       subs:[{pid:1,slot:'morning',qty:1},{pid:3,slot:'morning',qty:500}]},
+    ];
+    save();
+  }
+
+  // Set date/time greetings
+  var h=new Date().getHours();
+  var gr=h<12?'Morning':h<17?'Afternoon':'Evening';
+  document.getElementById('welcomeMsg').textContent='Good '+gr+' 🌅';
+  document.getElementById('welcomeDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' — MilkyRoots Admin Dashboard';
+
+  renderDashboard();
+  updateSidebar();
+  document.getElementById('f-start').value=today();
+  document.getElementById('delDate').value=today();
+}
+
+// ═══════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════
+function renderDashboard(){
+  var tod=today();
+  var todDels=DB.deliveries.filter(d=>d.date===tod);
+  var morningDone=todDels.filter(d=>d.slot==='morning').map(d=>d.custId);
+  var eveningDone=todDels.filter(d=>d.slot==='evening').map(d=>d.custId);
+  var todRev=todDels.reduce((s,d)=>s+d.total,0);
+  var mo=new Date(); var ms=mo.getFullYear()+'-'+(String(mo.getMonth()+1).padStart(2,'0'));
+  var monRev=DB.deliveries.filter(d=>d.date.startsWith(ms)).reduce((s,d)=>s+d.total,0);
+  var monPaid=DB.payments.filter(p=>p.date.startsWith(ms)).reduce((s,p)=>s+p.amount,0);
+  var totalDue=DB.customers.reduce((s,c)=>{var b=custBalance(c.id);return s+(b>0?b:0);},0);
+  document.getElementById('dashStats').innerHTML=
+    '<div class="sc"><div class="sv">'+DB.customers.length+'</div><div class="sl">Customers</div></div>'+
+    '<div class="sc g"><div class="sv">'+(new Set(morningDone)).size+'</div><div class="sl">☀️ Morning Done</div></div>'+
+    '<div class="sc p"><div class="sv">'+(new Set(eveningDone)).size+'</div><div class="sl">🌙 Evening Done</div></div>'+
+    '<div class="sc a"><div class="sv">'+fmtMoney(todRev)+'</div><div class="sl">Today Revenue</div></div>'+
+    '<div class="sc"><div class="sv">'+fmtMoney(monRev)+'</div><div class="sl">Month Revenue</div></div>'+
+    '<div class="sc g"><div class="sv">'+fmtMoney(monPaid)+'</div><div class="sl">Month Collected</div></div>'+
+    '<div class="sc r"><div class="sv">'+fmtMoney(totalDue)+'</div><div class="sl">Total Pending</div></div>';
+}
+
+function updateSidebar(){
+  var active=DB.customers.length;
+  var tod=today();
+  var todDels=DB.deliveries.filter(d=>d.date===tod);
+  var totalDue=DB.customers.reduce((s,c)=>{var b=custBalance(c.id);return s+(b>0?b:0);},0);
+  document.getElementById('sideInfo').innerHTML=
+    '👥 Customers: <strong>'+active+'</strong><br>'+
+    '🛵 Today Deliveries: <strong>'+todDels.length+'</strong><br>'+
+    '💰 Total Pending: <strong>'+fmtMoney(totalDue)+'</strong>';
+}
+
+// ═══════════════════════════════════════════════════════
+//  CUSTOMERS
+// ═══════════════════════════════════════════════════════
+function renderCustomers(){
+  var q=(document.getElementById('custSearch').value||'').toLowerCase();
+  var filtered=DB.customers.filter(c=>!q||c.name.toLowerCase().includes(q)||c.area.toLowerCase().includes(q));
+  var totalDue=DB.customers.reduce((s,c)=>{var b=custBalance(c.id);return s+(b>0?b:0);},0);
+  document.getElementById('custStats').innerHTML=
+    '<div class="sc"><div class="sv">'+DB.customers.length+'</div><div class="sl">Total</div></div>'+
+    '<div class="sc g"><div class="sv">'+DB.customers.length+'</div><div class="sl">Active</div></div>'+
+    '<div class="sc r"><div class="sv">'+fmtMoney(totalDue)+'</div><div class="sl">Total Pending</div></div>';
+  if(!filtered.length){
+    document.getElementById('custGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><span class="ei">👥</span><p>No customers found</p></div>';
+    return;
+  }
+  document.getElementById('custGrid').innerHTML=filtered.map(c=>{
+    var bal=custBalance(c.id);
+    var balClass=bal>0?'due':'ok';
+    var balTxt=bal>0?fmtMoney(bal)+' due':'✓ Clear';
+    var subHtml=c.subs.map(s=>{
+      var p=prodById(s.pid);
+      if(!p)return'';
+      var cost=Math.round(s.qty*p.price);
+      return '<div class="cp-row"><span>'+p.emoji+' '+p.name+' ('+s.qty+p.unit+') — '+(s.slot==='morning'?'☀️':'🌙')+'</span><span class="cp-cost">₹'+cost+'/day</span></div>';
+    }).join('');
+    return '<div class="cust-card">'+
+      '<div class="cc-top"><div><div class="cc-name">'+c.name+'</div><div class="cc-meta">📍 '+c.area+' · 📞 '+c.phone+'</div></div>'+
+      '<div class="cc-bal '+balClass+'">'+balTxt+'</div></div>'+
+      '<div class="cc-body"><div class="cc-prods">'+subHtml+'</div></div>'+
+      '<div class="cc-foot">'+
+        '<span class="badge badge-g">Active</span>'+
+        '<span class="badge badge-b">'+c.cycle+'</span>'+
+        '<div style="margin-left:auto;display:flex;gap:.35rem">'+
+          '<button class="btn btn-ghost btn-sm" onclick="openLedger(\''+c.id+'\')">📋</button>'+
+          '<button class="btn btn-ghost btn-sm" onclick="openCustModal(\''+c.id+'\')">✏️</button>'+
+          '<button class="btn btn-red btn-sm" onclick="deleteCust(\''+c.id+'\')">🗑️</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function openCustModal(id){
+  editingCustId=id||null;
+  document.getElementById('custModalTitle').textContent=id?'Edit Customer':'Add New Customer';
+  document.getElementById('subRows').innerHTML='';
+  subRowCount=0;
+  if(id){
+    var c=custById(id);
+    if(!c)return;
+    document.getElementById('f-name').value=c.name;
+    document.getElementById('f-phone').value=c.phone;
+    document.getElementById('f-cwa').value=c.cwa||'';
+    document.getElementById('f-area').value=c.area;
+    document.getElementById('f-addr').value=c.addr||'';
+    document.getElementById('f-cycle').value=c.cycle;
+    document.getElementById('f-start').value=c.start;
+    document.getElementById('f-dwa').value=c.dwa||'';
+    document.getElementById('f-notes').value=c.notes||'';
+    (c.subs||[]).forEach(s=>addSubRow(s.pid,s.slot,s.qty));
+  } else {
+    ['f-name','f-phone','f-cwa','f-area','f-addr','f-notes','f-dwa'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-cycle').value='monthly';
+    document.getElementById('f-start').value=today();
+    addSubRow(1,'morning',1);
+    addSubRow(1,'evening',1);
+  }
+  document.getElementById('custModal').classList.add('open');
+  updateSubsTotal();
+}
+
+function closeCustModal(){ document.getElementById('custModal').classList.remove('open'); editingCustId=null; }
+
+function addSubRow(pid,slot,qty){
+  var id='sr_'+(++subRowCount);
+  var prodOpts=PRODUCTS.map(p=>'<option value="'+p.id+'"'+(p.id==pid?' selected':'')+'>'+p.emoji+' '+p.name+' (₹'+p.price+'/'+p.unit+')</option>').join('');
+  var div=document.createElement('div');
+  div.id=id; div.className='sub-row';
+  div.innerHTML=
+    '<select class="prod-sel" onchange="updateSubsTotal()">'+prodOpts+'</select>'+
+    '<select class="slot-sel" onchange="updateSubsTotal()">'+
+      '<option value="morning"'+(slot==='morning'?' selected':'')+'>☀️ Morning</option>'+
+      '<option value="evening"'+(slot==='evening'?' selected':'')+'>🌙 Evening</option>'+
+    '</select>'+
+    '<input type="number" class="qty-in" value="'+(qty||1)+'" step="0.5" min="0.5" placeholder="Qty" oninput="updateSubsTotal()">'+
+    '<span class="sub-unit" id="'+id+'_unit">'+( pid?prodById(pid)?.unit:'L')+'</span>'+
+    '<span class="sub-cost" id="'+id+'_cost">₹0</span>'+
+    '<button class="btn btn-red btn-sm" onclick="document.getElementById(\''+id+'\').remove();updateSubsTotal()">×</button>';
+  document.getElementById('subRows').appendChild(div);
+  updateSubsTotal();
+}
+
+function updateSubsTotal(){
+  var rows=document.querySelectorAll('#subRows .sub-row');
+  var total=0;
+  rows.forEach(row=>{
+    var pid=row.querySelector('.prod-sel').value;
+    var qty=parseFloat(row.querySelector('.qty-in').value)||0;
+    var p=prodById(pid);
+    var cost=p?Math.round(qty*p.price):0;
+    total+=cost;
+    var costEl=row.querySelector('.sub-cost');
+    if(costEl)costEl.textContent='₹'+cost;
+    var unitEl=row.querySelector('[id$="_unit"]');
+    if(unitEl&&p)unitEl.textContent=p.unit;
+  });
+  var tot=document.getElementById('subsTotal');
+  tot.style.display=rows.length?'block':'none';
+  document.getElementById('subsTotalVal').textContent='₹'+total+'/day';
+}
+
+function getSubs(){
+  var rows=document.querySelectorAll('#subRows .sub-row');
+  var subs=[];
+  rows.forEach(row=>{
+    var pid=parseInt(row.querySelector('.prod-sel').value);
+    var slot=row.querySelector('.slot-sel').value;
+    var qty=parseFloat(row.querySelector('.qty-in').value)||0;
+    if(pid&&qty>0) subs.push({pid,slot,qty});
+  });
+  return subs;
+}
+
+function saveCust(){
+  var name=document.getElementById('f-name').value.trim();
+  var phone=document.getElementById('f-phone').value.trim();
+  var cwa=document.getElementById('f-cwa').value.trim();
+  var area=document.getElementById('f-area').value.trim();
+  var addr=document.getElementById('f-addr').value.trim();
+  var start=document.getElementById('f-start').value;
+  if(!name||!phone||!area||!start){ toast('Please fill Name, Phone, Area & Start Date','err'); return; }
+  var subs=getSubs();
+  var obj={name,phone,cwa:cwa||phone,dwa:document.getElementById('f-dwa').value.trim(),area,addr,
+    cycle:document.getElementById('f-cycle').value,start,notes:document.getElementById('f-notes').value.trim(),subs};
+  if(editingCustId){
+    var idx=DB.customers.findIndex(c=>c.id===editingCustId);
+    if(idx>=0) DB.customers[idx]=Object.assign(DB.customers[idx],obj);
+    toast('Customer updated ✓','ok');
+  } else {
+    DB.customers.push(Object.assign({id:uid()},obj));
+    toast('Customer added ✓','ok');
+  }
+  save(); closeCustModal(); renderCustomers(); updateSidebar();
+}
+
+function deleteCust(id){
+  var c=custById(id);
+  if(!c||!confirm('Delete '+c.name+'? All delivery records will also be removed.'))return;
+  DB.customers=DB.customers.filter(x=>x.id!==id);
+  DB.deliveries=DB.deliveries.filter(x=>x.custId!==id);
+  DB.payments=DB.payments.filter(x=>x.custId!==id);
+  save(); renderCustomers(); updateSidebar(); toast('Deleted','err');
+}
+
+// ═══════════════════════════════════════════════════════
+//  DELIVERY
+// ═══════════════════════════════════════════════════════
+function changeDelDate(d){
+  var dt=new Date(document.getElementById('delDate').value+'T00:00:00');
+  dt.setDate(dt.getDate()+d);
+  var nd=dt.toISOString().split('T')[0];
+  if(nd>today())return;
+  document.getElementById('delDate').value=nd;
+  renderDelivery();
+}
+
+function renderDelivery(){
+  var selDate=document.getElementById('delDate').value||today();
+  var todDels=DB.deliveries.filter(d=>d.date===selDate);
+  var mDone=new Set(todDels.filter(d=>d.slot==='morning').map(d=>d.custId));
+  var eDone=new Set(todDels.filter(d=>d.slot==='evening').map(d=>d.custId));
+  var todRev=todDels.reduce((s,d)=>s+d.total,0);
+  document.getElementById('delStats').innerHTML=
+    '<div class="sc g"><div class="sv">'+mDone.size+'</div><div class="sl">☀️ Morning Done</div></div>'+
+    '<div class="sc p"><div class="sv">'+eDone.size+'</div><div class="sl">🌙 Evening Done</div></div>'+
+    '<div class="sc a"><div class="sv">'+fmtMoney(todRev)+'</div><div class="sl">Today Revenue</div></div>'+
+    '<div class="sc r"><div class="sv">'+(DB.customers.length-Math.max(mDone.size,eDone.size))+'</div><div class="sl">Not Delivered</div></div>';
+
+  if(!DB.customers.length){
+    document.getElementById('delCards').innerHTML='<div class="empty"><span class="ei">👥</span><p>No customers yet. <a href="#" onclick="goPage(\'customers\')">Add customers</a> first.</p></div>';
+    return;
+  }
+
+  var html=DB.customers.map(c=>{
+    var bal=custBalance(c.id);
+    var balClass=bal>0?'due':'ok';
+    var balTxt=bal>0?fmtMoney(bal)+' due':'✓ Clear';
+    var mDel=todDels.find(d=>d.custId===c.id&&d.slot==='morning');
+    var eDel=todDels.find(d=>d.custId===c.id&&d.slot==='evening');
+    var mSubs=c.subs.filter(s=>s.slot==='morning');
+    var eSubs=c.subs.filter(s=>s.slot==='evening');
+    var mStateKey=c.id+'_morning';
+    var eStateKey=c.id+'_evening';
+    if(!delSlotState[mStateKey]) delSlotState[mStateKey]={expanded:!mDel,draft:buildDraft(mSubs)};
+    if(!delSlotState[eStateKey]) delSlotState[eStateKey]={expanded:!eDel,draft:buildDraft(eSubs)};
+    return '<div class="del-card">'+
+      '<div class="dc-head">'+
+        '<div style="flex:1"><div class="dc-name">'+c.name+'</div><div class="dc-area">📍 '+c.area+'</div></div>'+
+        '<div class="dc-bal '+balClass+'">'+balTxt+'</div>'+
+        '<div class="slot-pills">'+
+          '<span class="sp'+(mDel?' done':'')+'">☀️ '+(mDel?'Done':'Pending')+'</span>'+
+          '<span class="sp'+(eDel?' done':'')+'">🌙 '+(eDel?'Done':'Pending')+'</span>'+
+        '</div>'+
+      '</div>'+
+      buildSlotSection(c,'morning',mDel,mSubs,mStateKey,selDate)+
+      buildSlotSection(c,'evening',eDel,eSubs,eStateKey,selDate)+
+    '</div>';
+  }).join('');
+  document.getElementById('delCards').innerHTML=html;
+}
+
+function buildDraft(subs){
+  return subs.map(s=>{
+    var p=prodById(s.pid);
+    return {pid:s.pid,qty:s.qty,unit:p?p.unit:'',price:p?p.price:0,name:p?p.name:'',emoji:p?p.emoji:'🥛',unit_step:p?p.step:0.5};
+  });
+}
+
+function buildSlotSection(c,slot,delivered,subs,stateKey,selDate){
+  var slotLabel=slot==='morning'?'☀️ Morning':'🌙 Evening';
+  var secClass=slot==='morning'?'morning-sec':'evening-sec';
+  var isOpen=delSlotState[stateKey]?.expanded;
+  if(delivered){
+    var itemsHtml=delivered.items.map(i=>'<div class="di-row"><span>'+i.emoji+' '+i.name+'</span><span>'+i.qty+i.unit+'</span><span style="font-weight:700;color:var(--blue)">'+fmtMoney(i.total)+'</span></div>').join('');
+    return '<div class="slot-sec '+secClass+'">'+
+      '<div class="slot-hd" onclick="toggleSlot(\''+stateKey+'\')">'+
+        '<div class="slot-title">'+slotLabel+' <strong>Delivery</strong> <span class="slot-pill sp-del">✅ Delivered</span></div>'+
+        '<div class="slot-sum">'+fmtMoney(delivered.total)+'</div>'+
+        '<span class="chevron'+(isOpen?' open':'')+'">▾</span>'+
+      '</div>'+
+      '<div class="slot-body'+(isOpen?' open':'')+'">'+
+        '<div class="del-info">'+itemsHtml+'</div>'+
+        '<div class="di-total">Total: '+fmtMoney(delivered.total)+'</div>'+
+        (delivered.waUrl?'<button class="wa-btn" onclick="window.open(\''+delivered.waUrl+'\',\'_blank\')">📲 Resend WhatsApp to '+c.name+'</button>':'')+
+      '</div>'+
+    '</div>';
+  }
+  if(!subs.length){
+    return '<div class="slot-sec '+secClass+'"><div class="slot-hd" style="opacity:.5"><div class="slot-title">'+slotLabel+' — No subscription</div></div></div>';
+  }
+  var draft=delSlotState[stateKey]?.draft||buildDraft(subs);
+  var prodRows=draft.map((d,i)=>{
+    var key=stateKey+'_'+i;
+    return '<div class="prod-row">'+
+      '<div class="prod-info"><span class="prod-emoji">'+d.emoji+'</span><div><div class="prod-name">'+d.name+'</div><div class="prod-price">₹'+d.price+'/'+d.unit+'</div></div></div>'+
+      '<div class="qty-ctrl">'+
+        '<button class="qb" onclick="adjDraftQty(\''+stateKey+'\','+i+',-'+d.unit_step+')">−</button>'+
+        '<span class="qv" id="qv_'+key+'">'+d.qty+'</span>'+
+        '<button class="qb" onclick="adjDraftQty(\''+stateKey+'\','+i+','+d.unit_step+')">+</button>'+
+        '<span class="qu">'+d.unit+'</span>'+
+      '</div>'+
+      '<div class="pt" id="pt_'+key+'">'+fmtMoney(d.qty*d.price)+'</div>'+
+    '</div>';
+  }).join('');
+  var slotTotal=draft.reduce((s,d)=>s+(d.qty*d.price),0);
+  return '<div class="slot-sec '+secClass+'">'+
+    '<div class="slot-hd" onclick="toggleSlot(\''+stateKey+'\')">'+
+      '<div class="slot-title">'+slotLabel+' <strong>Delivery</strong> <span class="slot-pill sp-pend">⏳ Pending</span></div>'+
+      '<div class="slot-sum">'+subs.length+' products</div>'+
+      '<span class="chevron'+(isOpen?' open':'')+'">▾</span>'+
+    '</div>'+
+    '<div class="slot-body'+(isOpen?' open':'')+'" id="slotbody_'+stateKey+'">'+
+      '<div class="prod-list">'+prodRows+'</div>'+
+      '<div class="del-total-row"><span>'+slotLabel+' Total:</span><strong id="slt_'+stateKey+'">'+fmtMoney(slotTotal)+'</strong></div>'+
+      '<div class="action-row">'+
+        '<button class="skip-btn" onclick="skipSlot(\''+c.id+'\',\''+slot+'\',\''+selDate+'\')">Skip</button>'+
+        '<button class="deliver-btn" onclick="markDelivered(\''+c.id+'\',\''+slot+'\',\''+stateKey+'\',\''+selDate+'\')">✅ Mark Delivered + 📲 WhatsApp</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function toggleSlot(key){
+  if(!delSlotState[key])delSlotState[key]={expanded:false,draft:[]};
+  delSlotState[key].expanded=!delSlotState[key].expanded;
+  renderDelivery();
+}
+
+function adjDraftQty(stateKey,idx,delta){
+  var d=delSlotState[stateKey]?.draft;
+  if(!d||!d[idx])return;
+  var p=prodById(d[idx].pid);
+  var step=p?p.step:0.5;
+  var newQ=Math.max(0, Math.round((d[idx].qty+delta)*100)/100);
+  d[idx].qty=newQ;
+  var key=stateKey+'_'+idx;
+  var qvEl=document.getElementById('qv_'+key);
+  var ptEl=document.getElementById('pt_'+key);
+  if(qvEl)qvEl.textContent=newQ;
+  if(ptEl)ptEl.textContent=fmtMoney(newQ*d[idx].price);
+  // Update slot total
+  var total=d.reduce((s,x)=>s+(x.qty*x.price),0);
+  var sltEl=document.getElementById('slt_'+stateKey);
+  if(sltEl)sltEl.textContent=fmtMoney(total);
+}
+
+function skipSlot(custId,slot,selDate){
+  if(!confirm('Skip '+slot+' delivery for this customer?'))return;
+  if(delSlotState[custId+'_'+slot])delSlotState[custId+'_'+slot].expanded=false;
+  toast('Skipped '+slot+' delivery','warn');
+  renderDelivery();
+}
+
+function markDelivered(custId,slot,stateKey,selDate){
+  var c=custById(custId);
+  if(!c)return;
+  var draft=delSlotState[stateKey]?.draft||[];
+  var activeItems=draft.filter(d=>d.qty>0);
+  if(!activeItems.length){toast('Set quantity for at least one product!','err');return;}
+  var total=activeItems.reduce((s,d)=>s+(d.qty*d.price),0);
+  total=Math.round(total*100)/100;
+  var items=activeItems.map(d=>({pid:d.pid,name:d.name,emoji:d.emoji,qty:d.qty,unit:d.unit,price:d.price,total:Math.round(d.qty*d.price*100)/100}));
+  var seller=document.getElementById('sellerName').value||'Neetu';
+  // Build WhatsApp URL
+  var waUrl=buildCustWA(c,slot,items,total,selDate);
+  var del={id:uid(),custId,date:selDate,slot,total,items,seller,waUrl,waFor:c.cwa,ts:Date.now()};
+  DB.deliveries.push(del);
+  save();
+  if(delSlotState[stateKey])delSlotState[stateKey].expanded=false;
+  renderDelivery();
+  updateSidebar();
+  toast('✅ Delivered! Sending WhatsApp to '+c.name,'ok');
+  // Open WhatsApp for customer
+  setTimeout(()=>window.open(waUrl,'_blank'),400);
+  // Open WhatsApp for delivery man if number set
+  if(c.dwa){
+    var dmUrl=buildDelivManWA(c,slot,items,total,selDate);
+    setTimeout(()=>window.open(dmUrl,'_blank'),1800);
+  }
+}
+
+function buildCustWA(c,slot,items,total,selDate){
+  var dt=new Date(selDate+'T00:00:00');
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dl=dt.getDate()+' '+months[dt.getMonth()]+' '+dt.getFullYear();
+  var slotLabel=slot==='morning'?'Morning':'Evening';
+  var itemLines=items.map(i=>'   '+i.emoji+' '+i.name+' ('+i.qty+i.unit+'): ₹'+i.total).join('\n');
+  var bal=custBalance(c.id)+total;
+  var msg='🥛 *MilkyRoots Delivery Update!*\n\n'+
+    'Namaste *'+c.name+'* ji 🙏\n\n'+
+    '✅ Aapka *'+slotLabel+' Delivery* confirm ho gaya!\n'+
+    '📅 Date: '+dl+'\n\n'+
+    '*📦 Items Delivered:*\n'+itemLines+'\n\n'+
+    '💰 *Aaj ka Total: ₹'+Math.round(total)+'*\n'+
+    '📊 Running Balance: ₹'+Math.round(bal)+'\n\n'+
+    'Dhanyavaad! 🙏\n— MilkyRoots, Beawar\n📞 89495 53581';
+  var phone='91'+(c.cwa||c.phone).replace(/\D/g,'').slice(-10);
+  return 'https://api.whatsapp.com/send?phone='+phone+'&text='+encodeURIComponent(msg);
+}
+
+function buildDelivManWA(c,slot,items,total,selDate){
+  var dt=new Date(selDate+'T00:00:00');
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dl=dt.getDate()+' '+months[dt.getMonth()]+' '+dt.getFullYear();
+  var slotLabel=slot==='morning'?'Morning (6-7 AM)':'Evening (5-7 PM)';
+  var itemLines=items.map(i=>'   '+i.emoji+' '+i.name+': '+i.qty+i.unit).join('\n');
+  var msg='🛵 *MilkyRoots — Delivery Task*\n\n'+
+    '👤 Customer: *'+c.name+'*\n📍 Address: '+c.area+(c.addr?', '+c.addr:'')+
+    '\n📞 Phone: '+c.phone+'\n⏰ Slot: '+slotLabel+' | 📅 '+dl+
+    '\n\n*Items to Deliver:*\n'+itemLines+'\n\n💰 Total: ₹'+Math.round(total)+
+    '\n\nPlease confirm after delivery ✅\n— MilkyRoots Manager';
+  var phone='91'+(c.dwa||'8949553581').replace(/\D/g,'').slice(-10);
+  return 'https://api.whatsapp.com/send?phone='+phone+'&text='+encodeURIComponent(msg);
+}
+
+// ═══════════════════════════════════════════════════════
+//  BILLING
+// ═══════════════════════════════════════════════════════
+function renderBilling(){
+  var cf=document.getElementById('billCycle').value;
+  var sf=document.getElementById('billStat').value;
+  var totalDue=DB.customers.reduce((s,c)=>{var b=custBalance(c.id);return s+(b>0?b:0);},0);
+  var pending=DB.customers.filter(c=>custBalance(c.id)>0).length;
+  document.getElementById('billStats').innerHTML=
+    '<div class="sc r"><div class="sv">'+fmtMoney(totalDue)+'</div><div class="sl">Total Due</div></div>'+
+    '<div class="sc a"><div class="sv">'+pending+'</div><div class="sl">Customers Pending</div></div>'+
+    '<div class="sc g"><div class="sv">'+(DB.customers.length-pending)+'</div><div class="sl">All Paid</div></div>';
+  var custs=DB.customers.filter(c=>{
+    var mc=!cf||c.cycle===cf;
+    var bal=custBalance(c.id);
+    var ms=!sf||(sf==='due'&&bal>0)||(sf==='clear'&&bal<=0);
+    return mc&&ms;
+  });
+  if(!custs.length){
+    document.getElementById('billList').innerHTML='<div class="empty"><span class="ei">💰</span><p>No records found</p></div>';
+    return;
+  }
+  document.getElementById('billList').innerHTML=custs.map(c=>{
+    var bal=custBalance(c.id);
+    var hasDue=bal>0;
+    var dels=DB.deliveries.filter(d=>d.custId===c.id);
+    var totCharged=dels.reduce((s,d)=>s+d.total,0);
+    var totPaid=DB.payments.filter(p=>p.custId===c.id).reduce((s,p)=>s+p.amount,0);
+    var subPills=c.subs.map(s=>{var p=prodById(s.pid);return p?'<span class="bc-pill">'+p.emoji+' '+s.qty+p.unit+(s.slot==='morning'?'☀️':'🌙')+'</span>':''}).join('');
+    var prodSummary={};
+    dels.forEach(d=>(d.items||[]).forEach(i=>{
+      if(!prodSummary[i.name])prodSummary[i.name]={qty:0,total:0,unit:i.unit,price:i.price};
+      prodSummary[i.name].qty+=i.qty; prodSummary[i.name].total+=i.total;
+    }));
+    var breakRows=Object.keys(prodSummary).map(k=>{var r=prodSummary[k];
+      return '<div class="pb-row"><span>'+k+'</span><span>'+r.qty.toFixed(1)+r.unit+'</span><span style="color:var(--muted)">₹'+r.price+'/'+r.unit+'</span><span class="pb-cost">'+fmtMoney(r.total)+'</span></div>';
+    }).join('');
+    var payHistory=DB.payments.filter(p=>p.custId===c.id).map(p=>'<div class="pe"><span>'+fmtDate(p.date)+'</span><span class="badge badge-g">✅ '+fmtMoney(p.amount)+'</span><span class="badge badge-b">'+p.method+'</span><span style="color:var(--muted);font-size:.78rem">'+( p.note||'')+'</span></div>').join('')||'<div class="pe" style="color:var(--muted)">No payments yet</div>';
+    var bid='bc_'+c.id;
+    return '<div class="bill-card'+(hasDue?' has-due':'')+'">'+
+      '<div class="bc-hd" onclick="toggleBill(\''+bid+'\')">'+
+        '<div><div class="bc-n">'+c.name+'</div><div class="bc-m">📍 '+c.area+' · '+c.cycle+' · '+dels.length+' deliveries</div></div>'+
+        '<div class="bc-pills" style="flex:1">'+subPills+'</div>'+
+        '<div class="bc-amt '+(hasDue?'due':'ok')+'">'+(hasDue?fmtMoney(bal)+' due':'✓ Clear')+'</div>'+
+        '<div class="bc-acts">'+
+          (hasDue?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();openPayModal(\''+c.id+'\','+bal+')">💰 Collect</button>':'')+
+          '<span class="chevron" id="chev_'+bid+'">▾</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="bc-det" id="'+bid+'">'+
+        '<div class="bd-grid">'+
+          '<div class="bd-i"><div class="bd-v">'+fmtMoney(totCharged)+'</div><div class="bd-l">Total Billed</div></div>'+
+          '<div class="bd-i"><div class="bd-v" style="color:var(--green)">'+fmtMoney(totPaid)+'</div><div class="bd-l">Total Paid</div></div>'+
+          '<div class="bd-i"><div class="bd-v" style="color:'+(hasDue?'var(--red)':'var(--green)')+'">'+fmtMoney(Math.abs(bal))+'</div><div class="bd-l">'+(hasDue?'Balance Due':'In Advance')+'</div></div>'+
+          '<div class="bd-i"><div class="bd-v">'+dels.length+'</div><div class="bd-l">Deliveries</div></div>'+
+        '</div>'+
+        '<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.4rem">Product Breakdown</div>'+
+        '<div class="prod-breakdown">'+breakRows+'</div>'+
+        '<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:.7rem 0 .4rem">Payment History</div>'+
+        payHistory+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function toggleBill(bid){
+  var el=document.getElementById(bid);
+  var ch=document.getElementById('chev_'+bid);
+  if(el)el.classList.toggle('open');
+  if(ch)ch.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════
+//  PAY MODAL
+// ═══════════════════════════════════════════════════════
+function openPayModal(custId,bal){
+  var c=custById(custId);
+  if(!c)return;
+  payingCustId=custId;
+  document.getElementById('payModalInfo').innerHTML=
+    '<div style="background:var(--cream);border-radius:12px;padding:1rem;margin-bottom:.9rem">'+
+    '<div style="font-weight:700;color:var(--navy);font-size:1rem">'+c.name+'</div>'+
+    '<div style="font-size:.78rem;color:var(--muted);margin-top:2px">📍 '+c.area+'</div>'+
+    '<div style="font-family:var(--font-d);font-size:1.4rem;color:var(--red);margin-top:.4rem">Due: '+fmtMoney(bal)+'</div>'+
+    '</div>';
+  document.getElementById('pm-amt').value=Math.round(bal);
+  document.getElementById('pm-date').value=today();
+  document.getElementById('pm-note').value='';
+  document.getElementById('payModal').classList.add('open');
+}
+
+function confirmPay(){
+  if(!payingCustId)return;
+  var amt=parseFloat(document.getElementById('pm-amt').value);
+  if(!amt||amt<=0){toast('Enter valid amount','err');return;}
+  DB.payments.push({id:uid(),custId:payingCustId,amount:amt,
+    method:document.getElementById('pm-meth').value,
+    date:document.getElementById('pm-date').value,
+    note:document.getElementById('pm-note').value});
+  save();
+  closeModal('payModal');
+  renderBilling();
+  updateSidebar();
+  toast('Payment of '+fmtMoney(amt)+' recorded ✅','ok');
+  payingCustId=null;
+}
+
+// ═══════════════════════════════════════════════════════
+//  LEDGER
+// ═══════════════════════════════════════════════════════
+function openLedger(custId){
+  ledgerCustId=custId;
+  goPage('ledger');
+}
+
+function renderLedger(){
+  var c=custById(ledgerCustId);
+  if(!c){ document.getElementById('ledgerHeader').innerHTML='<p>Customer not found</p>'; return; }
+  var bal=custBalance(c.id);
+  var dels=DB.deliveries.filter(d=>d.custId===c.id).reverse();
+  var pays=DB.payments.filter(p=>p.custId===c.id).reverse();
+  var totCharged=dels.reduce((s,d)=>s+d.total,0);
+  var totPaid=pays.reduce((s,p)=>s+p.amount,0);
+
+  document.getElementById('ledgerHeader').innerHTML=
+    '<div class="lh-info"><h1>'+c.name+'</h1><p>📍 '+c.area+' · 📞 '+c.phone+' · '+c.cycle+'</p></div>'+
+    '<div class="lh-bal'+(bal>0?' due':'')+'" ><div class="lbl">Balance</div><div class="val">'+(bal>0?fmtMoney(bal)+' due':'✓ Clear')+'</div></div>';
+
+  document.getElementById('ledgerStats').innerHTML=
+    '<div class="sc"><div class="sv">'+fmtMoney(totCharged)+'</div><div class="sl">Total Billed</div></div>'+
+    '<div class="sc g"><div class="sv">'+fmtMoney(totPaid)+'</div><div class="sl">Total Paid</div></div>'+
+    '<div class="sc r"><div class="sv">'+fmtMoney(bal)+'</div><div class="sl">Balance Due</div></div>'+
+    '<div class="sc"><div class="sv">'+dels.length+'</div><div class="sl">Deliveries</div></div>';
+
+  document.getElementById('paySection').innerHTML= bal>0?
+    '<div class="pay-strip">'+
+    '<div class="pay-strip-title">💰 Collect Payment</div>'+
+    '<div class="pay-form">'+
+      '<input type="number" id="lpAmt" placeholder="₹ Amount" value="'+Math.round(bal)+'">'+
+      '<select id="lpMeth"><option value="cash">💵 Cash</option><option value="gpay">GPay</option><option value="phonepe">PhonePe</option><option value="paytm">Paytm</option></select>'+
+      '<input type="date" id="lpDate" value="'+today()+'">'+
+      '<input id="lpNote" placeholder="Note (optional)">'+
+      '<button class="btn btn-green" onclick="ledgerPay()">✅ Record Payment</button>'+
+    '</div></div>':'';
+
+  document.getElementById('ledgerDels').innerHTML=dels.length?dels.map(d=>{
+    var items=(d.items||[]).map(i=>'<span class="de-item">'+i.emoji+' '+i.name+' '+i.qty+i.unit+'</span>').join('');
+    return '<div class="de">'+
+      '<span class="de-date">'+fmtDate(d.date)+'</span>'+
+      '<span class="de-slot '+(d.slot==='morning'?'m':'e')+'">'+(d.slot==='morning'?'☀️ Morning':'🌙 Evening')+'</span>'+
+      '<span class="badge badge-g">Delivered</span>'+
+      '<div class="de-items">'+items+'</div>'+
+      '<div class="de-amt">'+fmtMoney(d.total)+'</div>'+
+    '</div>';
+  }).join(''):'<div class="empty" style="padding:1.5rem"><span class="ei">📦</span><p>No deliveries yet</p></div>';
+
+  document.getElementById('ledgerPays').innerHTML=pays.length?pays.map(p=>
+    '<div class="pe"><span>'+fmtDate(p.date)+'</span><span class="badge badge-g">✅ '+fmtMoney(p.amount)+'</span><span class="badge badge-b">'+p.method+'</span><span style="color:var(--muted)">'+( p.note||'')+'</span></div>'
+  ).join(''):'<div class="empty" style="padding:1.5rem"><span class="ei">💳</span><p>No payments yet</p></div>';
+}
+
+function ledgerPay(){
+  var amt=parseFloat(document.getElementById('lpAmt').value);
+  if(!amt||amt<=0){toast('Enter valid amount','err');return;}
+  DB.payments.push({id:uid(),custId:ledgerCustId,amount:amt,
+    method:document.getElementById('lpMeth').value,
+    date:document.getElementById('lpDate').value,
+    note:document.getElementById('lpNote').value});
+  save(); renderLedger(); updateSidebar(); toast('Payment recorded ✅','ok');
+}
+
+// ═══════════════════════════════════════════════════════
+//  CALENDAR
+// ═══════════════════════════════════════════════════════
+function calShift(d){calMonth+=d;if(calMonth<0){calMonth=11;calYear--;}if(calMonth>11){calMonth=0;calYear++;}renderCal();}
+
+function populateCalSel(){
+  var sel=document.getElementById('calCust');
+  var cur=sel.value;
+  sel.innerHTML='<option value="">— Select customer —</option>';
+  DB.customers.forEach(c=>{
+    var o=document.createElement('option');
+    o.value=c.id; o.textContent=c.name+' ('+c.area+')';
+    if(c.id===cur)o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function renderCal(){
+  var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calLabel').textContent=months[calMonth]+' '+calYear;
+  var custId=document.getElementById('calCust').value;
+  var tod=today();
+  var firstDay=new Date(calYear,calMonth,1).getDay();
+  var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  var html='';
+  for(var i=0;i<firstDay;i++)html+='<div class="cd empty"></div>';
+  var pCount=0,totalAmt=0;
+  for(var day=1;day<=daysInMonth;day++){
+    var mm=String(calMonth+1).padStart(2,'0');
+    var dd=String(day).padStart(2,'0');
+    var ds=calYear+'-'+mm+'-'+dd;
+    var isToday=ds===tod;
+    var isFuture=ds>tod;
+    var cls='cd';
+    if(isFuture){cls+=' future';}
+    else if(custId){
+      var dayDels=DB.deliveries.filter(d=>d.custId===custId&&d.date===ds);
+      if(dayDels.length){cls+=' present';pCount++;totalAmt+=dayDels.reduce((s,d)=>s+d.total,0);}
+      else{cls+=' nodata';}
+    } else {cls+=' nodata';}
+    if(isToday)cls+=' today-cell';
+    html+='<div class="'+cls+'" title="'+ds+'">'+day+'</div>';
+  }
+  document.getElementById('calGrid').innerHTML=html;
+  if(custId){
+    var bal=custBalance(custId);
+    document.getElementById('calSum').innerHTML=
+      '<div class="cs-i"><div class="cs-v" style="color:var(--green)">'+pCount+'</div><div class="cs-l">Deliveries</div></div>'+
+      '<div class="cs-i"><div class="cs-v">'+fmtMoney(totalAmt)+'</div><div class="cs-l">Month Amount</div></div>'+
+      '<div class="cs-i"><div class="cs-v" style="color:'+(bal>0?'var(--red)':'var(--green)')+'">'+fmtMoney(Math.abs(bal))+'</div><div class="cs-l">'+(bal>0?'Balance Due':'Advance')+'</div></div>'+
+      '<div class="cs-i"><div class="cs-v">'+DB.deliveries.filter(d=>d.custId===custId).length+'</div><div class="cs-l">Total Ever</div></div>';
+  } else { document.getElementById('calSum').innerHTML=''; }
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  REPORTS
+// ═══════════════════════════════════════════════════════
+function initReportMonths(){
+  var sel=document.getElementById('reportMonth');
+  if(sel.options.length>1)return;
+  sel.innerHTML='';
+  var now=new Date();
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for(var i=0;i<12;i++){
+    var d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    var val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    var opt=document.createElement('option');
+    opt.value=val; opt.textContent=months[d.getMonth()]+' '+d.getFullYear();
+    if(i===0)opt.selected=true;
+    sel.appendChild(opt);
+  }
+}
+
+function renderReports(){
+  var month=document.getElementById('reportMonth').value;
+  if(!month)return;
+  var dels=DB.deliveries.filter(d=>d.date.startsWith(month));
+  var pays=DB.payments.filter(p=>p.date.startsWith(month));
+  var totalRev=dels.reduce((s,d)=>s+d.total,0);
+  var totalPaid=pays.reduce((s,p)=>s+p.amount,0);
+  var totalDue=DB.customers.reduce((s,c)=>{var b=custBalance(c.id);return s+(b>0?b:0);},0);
+  var delivCount=dels.length;
+  document.getElementById('repStats').innerHTML=
+    '<div class="sc"><div class="sv">'+delivCount+'</div><div class="sl">Total Deliveries</div></div>'+
+    '<div class="sc a"><div class="sv">'+fmtMoney(totalRev)+'</div><div class="sl">Revenue</div></div>'+
+    '<div class="sc g"><div class="sv">'+fmtMoney(totalPaid)+'</div><div class="sl">Collected</div></div>'+
+    '<div class="sc r"><div class="sv">'+fmtMoney(totalDue)+'</div><div class="sl">Total Pending</div></div>';
+
+  // Top customers by revenue
+  var custRev={};
+  dels.forEach(d=>{custRev[d.custId]=(custRev[d.custId]||0)+d.total;});
+  var sorted=Object.keys(custRev).map(id=>({id,name:(custById(id)||{name:'Unknown'}).name,rev:custRev[id]}))
+    .sort((a,b)=>b.rev-a.rev);
+  var maxRev=sorted[0]?sorted[0].rev:1;
+
+  var custRevRows=sorted.slice(0,8).map(r=>
+    '<div class="rep-row"><span class="rep-name">'+r.name+'</span>'+
+    '<div style="display:flex;align-items:center;gap:.4rem">'+
+    '<div class="rep-bar"><div class="rep-bar-fill" style="width:'+Math.round(r.rev/maxRev*100)+'%"></div></div>'+
+    '<span class="rep-val">'+fmtMoney(r.rev)+'</span></div></div>'
+  ).join('')||'<div class="rep-row"><span style="color:var(--muted)">No data</span></div>';
+
+  // Product breakdown
+  var prodRev={};
+  dels.forEach(d=>(d.items||[]).forEach(i=>{
+    if(!prodRev[i.name])prodRev[i.name]={qty:0,total:0,unit:i.unit};
+    prodRev[i.name].qty+=i.qty; prodRev[i.name].total+=i.total;
+  }));
+  var prodRows=Object.keys(prodRev).map(k=>{
+    var r=prodRev[k];
+    return '<div class="rep-row"><span class="rep-name">'+k+'</span><span style="color:var(--muted);font-size:.78rem">'+r.qty.toFixed(1)+r.unit+'</span><span class="rep-val">'+fmtMoney(r.total)+'</span></div>';
+  }).join('')||'<div class="rep-row"><span style="color:var(--muted)">No data</span></div>';
+
+  // Payment history
+  var payRows=pays.slice(0,8).map(p=>{
+    var c=custById(p.custId)||{name:'Unknown'};
+    return '<div class="rep-row"><div><div class="rep-name">'+c.name+'</div><div style="font-size:.7rem;color:var(--muted)">'+fmtDate(p.date)+' · '+p.method+'</div></div><span class="rep-val" style="color:var(--green)">'+fmtMoney(p.amount)+'</span></div>';
+  }).join('')||'<div class="rep-row"><span style="color:var(--muted)">No payments this month</span></div>';
+
+  // Morning vs Evening
+  var mCount=dels.filter(d=>d.slot==='morning').length;
+  var eCount=dels.filter(d=>d.slot==='evening').length;
+  var mRev=dels.filter(d=>d.slot==='morning').reduce((s,d)=>s+d.total,0);
+  var eRev=dels.filter(d=>d.slot==='evening').reduce((s,d)=>s+d.total,0);
+
+  document.getElementById('repGrid').innerHTML=
+    '<div class="rep-card"><div class="rep-head"><h4>🏆 Top Customers by Revenue</h4><p>'+month+'</p></div><div class="rep-body">'+custRevRows+'</div></div>'+
+    '<div class="rep-card"><div class="rep-head"><h4>📦 Product Sales Breakdown</h4><p>'+month+'</p></div><div class="rep-body">'+prodRows+'</div></div>'+
+    '<div class="rep-card"><div class="rep-head"><h4>💳 Payment History</h4><p>'+month+'</p></div><div class="rep-body">'+payRows+'</div></div>'+
+    '<div class="rep-card"><div class="rep-head"><h4>⏰ Morning vs Evening</h4><p>Delivery slot breakdown</p></div>'+
+    '<div class="rep-body">'+
+      '<div class="rep-row"><span class="rep-name">☀️ Morning Deliveries</span><span class="rep-val">'+mCount+' · '+fmtMoney(mRev)+'</span></div>'+
+      '<div class="rep-row"><span class="rep-name">🌙 Evening Deliveries</span><span class="rep-val">'+eCount+' · '+fmtMoney(eRev)+'</span></div>'+
+      '<div class="rep-row"><span class="rep-name">📊 Total Deliveries</span><span class="rep-val">'+delivCount+'</span></div>'+
+      '<div class="rep-row"><span class="rep-name">💰 Total Revenue</span><span class="rep-val">'+fmtMoney(totalRev)+'</span></div>'+
+      '<div class="rep-row"><span class="rep-name">✅ Amount Collected</span><span class="rep-val" style="color:var(--green)">'+fmtMoney(totalPaid)+'</span></div>'+
+      '<div class="rep-row"><span class="rep-name">⏳ Still Pending</span><span class="rep-val" style="color:var(--red)">'+fmtMoney(totalRev-totalPaid)+'</span></div>'+
+    '</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════
+//  MODAL HELPERS
+// ═══════════════════════════════════════════════════════
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+function toast(msg,type){
+  var wrap=document.getElementById('toastWrap');
+  var el=document.createElement('div');
+  el.className='toast '+(type||'');
+  el.textContent=msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(120px)'; el.style.transition='all .3s'; setTimeout(()=>el.remove(),350); },3000);
+}
+
+// Click backdrop to close modals
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); });
+});
+</script>
+</body>
+</html>

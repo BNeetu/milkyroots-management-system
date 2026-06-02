@@ -1,0 +1,241 @@
+<!-- daily-checklist.component.html -->
+<!--
+  SELLER'S MAIN SCREEN:
+  - Shows every active customer
+  - Morning + Evening delivery slots separately
+  - Quantity adjusters per product
+  - "Mark Delivered" sends WhatsApp instantly
+-->
+
+<div class="checklist-page">
+
+  <!-- ── PAGE HEADER ── -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">🛵 Daily Delivery Checklist</h1>
+      <div class="date-nav">
+        <button class="date-btn" (click)="changeDate(-1)">&#8592;</button>
+        <input type="date" class="date-input" [(ngModel)]="selectedDate" (change)="loadChecklist()">
+        <button class="date-btn" (click)="changeDate(1)" [disabled]="isToday()">&#8594;</button>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="hs-item">
+        <span class="hs-val green">{{ morningCount }}</span>
+        <span class="hs-lbl">☀️ Morning Done</span>
+      </div>
+      <div class="hs-item">
+        <span class="hs-val blue">{{ eveningCount }}</span>
+        <span class="hs-lbl">🌙 Evening Done</span>
+      </div>
+      <div class="hs-item">
+        <span class="hs-val amber">₹{{ todayRevenue | number:'1.0-0' }}</span>
+        <span class="hs-lbl">Today Revenue</span>
+      </div>
+      <div class="hs-item">
+        <span class="hs-val red">{{ pendingCount }}</span>
+        <span class="hs-lbl">Pending</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SELLER NAME ── -->
+  <div class="seller-row">
+    <label class="seller-lbl">Delivered by:</label>
+    <input class="seller-input" [(ngModel)]="sellerName" placeholder="e.g. Neetu">
+  </div>
+
+  <!-- ── LOADING ── -->
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading checklist...</p>
+  </div>
+
+  <!-- ── CUSTOMER CARDS ── -->
+  <div class="customer-cards" *ngIf="!loading">
+
+    <div class="cust-card" *ngFor="let item of checklist; trackBy: trackById">
+
+      <!-- CARD HEADER -->
+      <div class="cust-card-head">
+        <div class="cust-info">
+          <div class="cust-name">{{ item.customer_name }}</div>
+          <div class="cust-area">📍 {{ item.area }}</div>
+        </div>
+        <div class="cust-balance" [class.overdue]="item.running_balance > 0" [class.clear]="item.running_balance <= 0">
+          <span class="bal-lbl">Balance</span>
+          <span class="bal-val">
+            {{ item.running_balance > 0 ? '₹' + (item.running_balance | number:'1.0-0') + ' due' : '✓ Clear' }}
+          </span>
+        </div>
+        <div class="slot-badges">
+          <span class="slot-badge morning" [class.done]="item.morning_delivered">
+            ☀️ {{ item.morning_delivered ? 'Delivered' : 'Pending' }}
+          </span>
+          <span class="slot-badge evening" [class.done]="item.evening_delivered">
+            🌙 {{ item.evening_delivered ? 'Delivered' : 'Pending' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- MORNING DELIVERY SECTION -->
+      <div class="slot-section morning-section">
+        <div class="slot-header" (click)="toggleSlot(item, 'morning')">
+          <div class="slot-title">
+            ☀️ <strong>Morning Delivery</strong>
+            <span class="slot-status-pill" [class.delivered]="item.morning_delivered" [class.pending]="!item.morning_delivered">
+              {{ item.morning_delivered ? '✅ Delivered' : '⏳ Pending' }}
+            </span>
+          </div>
+          <div class="slot-summary" *ngIf="item.morning_delivered && item.morning_delivery">
+            ₹{{ item.morning_delivery.total_amount | number:'1.0-0' }}
+          </div>
+          <div class="slot-summary" *ngIf="!item.morning_delivered">
+            {{ item.morning_subscriptions.length }} products
+          </div>
+          <span class="chevron" [class.open]="item.morning_expanded">▾</span>
+        </div>
+
+        <div class="slot-body" [class.open]="item.morning_expanded">
+
+          <!-- Already Delivered: Show what was delivered -->
+          <div class="delivered-info" *ngIf="item.morning_delivered && item.morning_delivery">
+            <div class="delivered-items">
+              <div class="del-item" *ngFor="let di of item.morning_delivery.items">
+                <span>{{ di.product_emoji }} {{ di.product_name }}</span>
+                <span>{{ di.quantity }}{{ di.unit }}</span>
+                <span class="item-total">₹{{ di.total_price | number:'1.0-0' }}</span>
+              </div>
+            </div>
+            <div class="del-total">Total: ₹{{ item.morning_delivery.total_amount | number:'1.0-0' }}</div>
+            <button class="wa-resend-btn" *ngIf="item.morning_delivery.whatsapp_url"
+              (click)="openWhatsApp(item.morning_delivery.whatsapp_url!)">
+              📲 Resend WhatsApp
+            </button>
+          </div>
+
+          <!-- Not Delivered: Show product selectors -->
+          <div class="delivery-form" *ngIf="!item.morning_delivered">
+            <div class="products-list">
+              <div class="prod-row" *ngFor="let draft of item.morning_items; let i = index">
+                <div class="prod-info">
+                  <span class="prod-emoji">{{ draft.product.emoji }}</span>
+                  <div>
+                    <div class="prod-name">{{ draft.product.name }}</div>
+                    <div class="prod-price">₹{{ draft.product.price_per_unit }}/{{ draft.product.unit }}</div>
+                  </div>
+                </div>
+                <div class="qty-ctrl">
+                  <button class="qty-btn" (click)="adjQty(draft, -draft.product.step_qty)">−</button>
+                  <span class="qty-val">{{ draft.quantity }}</span>
+                  <button class="qty-btn" (click)="adjQty(draft, draft.product.step_qty)">+</button>
+                  <span class="qty-unit">{{ draft.product.unit }}</span>
+                </div>
+                <div class="prod-total">₹{{ draft.total | number:'1.0-0' }}</div>
+              </div>
+            </div>
+
+            <div class="delivery-total-row">
+              <span>Morning Total:</span>
+              <strong>₹{{ getMorningTotal(item) | number:'1.0-0' }}</strong>
+            </div>
+
+            <div class="action-btns">
+              <button class="skip-btn" (click)="skipDelivery(item, 'morning')">Skip</button>
+              <button class="deliver-btn" [disabled]="delivering[item.customer_id + '_morning']"
+                (click)="markDelivered(item, 'morning')">
+                <span *ngIf="!delivering[item.customer_id + '_morning']">
+                  ✅ Mark Delivered + 📲 WhatsApp
+                </span>
+                <span *ngIf="delivering[item.customer_id + '_morning']">Saving...</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EVENING DELIVERY SECTION -->
+      <div class="slot-section evening-section">
+        <div class="slot-header" (click)="toggleSlot(item, 'evening')">
+          <div class="slot-title">
+            🌙 <strong>Evening Delivery</strong>
+            <span class="slot-status-pill" [class.delivered]="item.evening_delivered" [class.pending]="!item.evening_delivered">
+              {{ item.evening_delivered ? '✅ Delivered' : '⏳ Pending' }}
+            </span>
+          </div>
+          <div class="slot-summary" *ngIf="item.evening_delivered && item.evening_delivery">
+            ₹{{ item.evening_delivery.total_amount | number:'1.0-0' }}
+          </div>
+          <div class="slot-summary" *ngIf="!item.evening_delivered">
+            {{ item.evening_subscriptions.length }} products
+          </div>
+          <span class="chevron" [class.open]="item.evening_expanded">▾</span>
+        </div>
+
+        <div class="slot-body" [class.open]="item.evening_expanded">
+
+          <div class="delivered-info" *ngIf="item.evening_delivered && item.evening_delivery">
+            <div class="delivered-items">
+              <div class="del-item" *ngFor="let di of item.evening_delivery.items">
+                <span>{{ di.product_emoji }} {{ di.product_name }}</span>
+                <span>{{ di.quantity }}{{ di.unit }}</span>
+                <span class="item-total">₹{{ di.total_price | number:'1.0-0' }}</span>
+              </div>
+            </div>
+            <div class="del-total">Total: ₹{{ item.evening_delivery.total_amount | number:'1.0-0' }}</div>
+            <button class="wa-resend-btn" *ngIf="item.evening_delivery.whatsapp_url"
+              (click)="openWhatsApp(item.evening_delivery.whatsapp_url!)">
+              📲 Resend WhatsApp
+            </button>
+          </div>
+
+          <div class="delivery-form" *ngIf="!item.evening_delivered">
+            <div class="products-list">
+              <div class="prod-row" *ngFor="let draft of item.evening_items; let i = index">
+                <div class="prod-info">
+                  <span class="prod-emoji">{{ draft.product.emoji }}</span>
+                  <div>
+                    <div class="prod-name">{{ draft.product.name }}</div>
+                    <div class="prod-price">₹{{ draft.product.price_per_unit }}/{{ draft.product.unit }}</div>
+                  </div>
+                </div>
+                <div class="qty-ctrl">
+                  <button class="qty-btn" (click)="adjQty(draft, -draft.product.step_qty)">−</button>
+                  <span class="qty-val">{{ draft.quantity }}</span>
+                  <button class="qty-btn" (click)="adjQty(draft, draft.product.step_qty)">+</button>
+                  <span class="qty-unit">{{ draft.product.unit }}</span>
+                </div>
+                <div class="prod-total">₹{{ draft.total | number:'1.0-0' }}</div>
+              </div>
+            </div>
+
+            <div class="delivery-total-row">
+              <span>Evening Total:</span>
+              <strong>₹{{ getEveningTotal(item) | number:'1.0-0' }}</strong>
+            </div>
+
+            <div class="action-btns">
+              <button class="skip-btn" (click)="skipDelivery(item, 'evening')">Skip</button>
+              <button class="deliver-btn" [disabled]="delivering[item.customer_id + '_evening']"
+                (click)="markDelivered(item, 'evening')">
+                <span *ngIf="!delivering[item.customer_id + '_evening']">
+                  ✅ Mark Delivered + 📲 WhatsApp
+                </span>
+                <span *ngIf="delivering[item.customer_id + '_evening']">Saving...</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="empty-state" *ngIf="checklist.length === 0">
+      <div class="empty-icon">👥</div>
+      <p>No active customers found. <a routerLink="/customers">Add customers</a> first.</p>
+    </div>
+
+  </div>
+
+</div>
