@@ -9,7 +9,7 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "browser"
+        "distDir": "dist/milkyroots-frontend/browser"
       }
     }
   ],
