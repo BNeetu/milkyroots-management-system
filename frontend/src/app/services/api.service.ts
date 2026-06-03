@@ -79,7 +79,7 @@ export class ApiService {
   }
 
   getCustomer(id: number): Observable<Customer> {
-    return this.http.get<Customer>(`${API}/customers/${id}/`, { headers: this.headers });
+    return this.http.get<Customer>(`${API}/customers/${id}`, { headers: this.headers });
   }
 
   createCustomer(body: CustomerCreate): Observable<Customer> {
@@ -87,22 +87,22 @@ export class ApiService {
   }
 
   updateCustomer(id: number, body: Partial<Customer>): Observable<Customer> {
-    return this.http.put<Customer>(`${API}/customers/${id}/`, body, { headers: this.headers });
+    return this.http.put<Customer>(`${API}/customers/${id}`, body, { headers: this.headers });
   }
 
   deleteCustomer(id: number): Observable<void> {
-    return this.http.delete<void>(`${API}/customers/${id}/`, { headers: this.headers });
+    return this.http.delete<void>(`${API}/customers/${id}`, { headers: this.headers });
   }
 
   getCustomerLedger(id: number): Observable<any> {
-    return this.http.get<any>(`${API}/customers/${id}/ledger/`, { headers: this.headers });
+    return this.http.get<any>(`${API}/customers/${id}/ledger`, { headers: this.headers });
   }
 
   // DELIVERIES
   getDailyChecklist(date?: string): Observable<ChecklistItem[]> {
     let params = new HttpParams();
     if (date) params = params.set('target_date', date);
-    return this.http.get<ChecklistItem[]>(`${API}/deliveries/checklist/`, { headers: this.headers, params });
+    return this.http.get<ChecklistItem[]>(`${API}/deliveries/checklist`, { headers: this.headers, params });
   }
 
   createDelivery(body: DeliveryCreate): Observable<Delivery> {
