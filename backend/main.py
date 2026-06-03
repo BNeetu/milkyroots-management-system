@@ -83,11 +83,16 @@ app.include_router(dashboard.router,  prefix="/api/dashboard",  tags=["Dashboard
 
 @app.get("/", tags=["Health"])
 async def root():
+    db_url = settings.effective_database_url
+    is_configured = "localhost" not in db_url
+    
     return {
         "status": "ok", 
         "app": "MilkyRoots API", 
         "version": "1.0.0",
-        "db_configured": settings.DATABASE_URL != "postgresql+asyncpg://milkyroots:password@localhost:5432/milkyroots_db"
+        "db_configured": is_configured,
+        "db_source": "POSTGRES_URL" if settings.POSTGRES_URL else "DATABASE_URL",
+        "db_prefix": db_url[:15] + "..." if is_configured else "default-local"
     }
 
 @app.get("/health", tags=["Health"])
