@@ -62,7 +62,10 @@ export class ApiService {
 
   // PRODUCTS
   getProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(`${API}/products`, { headers: this.headers });
+    console.log('Fetching products...');
+    return this.http.get<Product[]>(`${API}/products/`, { headers: this.headers }).pipe(
+      tap(p => console.log('Products loaded:', p))
+    );
   }
 
   seedProducts(): Observable<any> {
@@ -72,38 +75,38 @@ export class ApiService {
   // CUSTOMERS
   getCustomers(activeOnly = true): Observable<Customer[]> {
     const params = new HttpParams().set('active_only', activeOnly.toString());
-    return this.http.get<Customer[]>(`${API}/customers`, { headers: this.headers, params });
+    return this.http.get<Customer[]>(`${API}/customers/`, { headers: this.headers, params });
   }
 
   getCustomer(id: number): Observable<Customer> {
-    return this.http.get<Customer>(`${API}/customers/${id}`, { headers: this.headers });
+    return this.http.get<Customer>(`${API}/customers/${id}/`, { headers: this.headers });
   }
 
   createCustomer(body: CustomerCreate): Observable<Customer> {
-    return this.http.post<Customer>(`${API}/customers`, body, { headers: this.headers });
+    return this.http.post<Customer>(`${API}/customers/`, body, { headers: this.headers });
   }
 
   updateCustomer(id: number, body: Partial<Customer>): Observable<Customer> {
-    return this.http.put<Customer>(`${API}/customers/${id}`, body, { headers: this.headers });
+    return this.http.put<Customer>(`${API}/customers/${id}/`, body, { headers: this.headers });
   }
 
   deleteCustomer(id: number): Observable<void> {
-    return this.http.delete<void>(`${API}/customers/${id}`, { headers: this.headers });
+    return this.http.delete<void>(`${API}/customers/${id}/`, { headers: this.headers });
   }
 
   getCustomerLedger(id: number): Observable<any> {
-    return this.http.get<any>(`${API}/customers/${id}/ledger`, { headers: this.headers });
+    return this.http.get<any>(`${API}/customers/${id}/ledger/`, { headers: this.headers });
   }
 
   // DELIVERIES
   getDailyChecklist(date?: string): Observable<ChecklistItem[]> {
     let params = new HttpParams();
     if (date) params = params.set('target_date', date);
-    return this.http.get<ChecklistItem[]>(`${API}/deliveries/checklist`, { headers: this.headers, params });
+    return this.http.get<ChecklistItem[]>(`${API}/deliveries/checklist/`, { headers: this.headers, params });
   }
 
   createDelivery(body: DeliveryCreate): Observable<Delivery> {
-    return this.http.post<Delivery>(`${API}/deliveries`, body, { headers: this.headers });
+    return this.http.post<Delivery>(`${API}/deliveries/`, body, { headers: this.headers });
   }
 
   getDeliveries(customerId?: number, fromDate?: string, toDate?: string): Observable<Delivery[]> {
@@ -111,18 +114,18 @@ export class ApiService {
     if (customerId) params = params.set('customer_id', customerId.toString());
     if (fromDate) params = params.set('from_date', fromDate);
     if (toDate) params = params.set('to_date', toDate);
-    return this.http.get<Delivery[]>(`${API}/deliveries`, { headers: this.headers, params });
+    return this.http.get<Delivery[]>(`${API}/deliveries/`, { headers: this.headers, params });
   }
 
   // PAYMENTS
   createPayment(body: PaymentCreate): Observable<Payment> {
-    return this.http.post<Payment>(`${API}/payments`, body, { headers: this.headers });
+    return this.http.post<Payment>(`${API}/payments/`, body, { headers: this.headers });
   }
 
   getPayments(customerId?: number): Observable<Payment[]> {
     let params = new HttpParams();
     if (customerId) params = params.set('customer_id', customerId.toString());
-    return this.http.get<Payment[]>(`${API}/payments`, { headers: this.headers, params });
+    return this.http.get<Payment[]>(`${API}/payments/`, { headers: this.headers, params });
   }
 }
 
