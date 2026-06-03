@@ -62,10 +62,7 @@ export class ApiService {
 
   // PRODUCTS
   getProducts(): Observable<Product[]> {
-    console.log('Fetching products...');
-    return this.http.get<Product[]>(`${API}/products/`, { headers: this.headers }).pipe(
-      tap(p => console.log('Products loaded:', p))
-    );
+    return this.http.get<Product[]>(`${API}/products/`, { headers: this.headers });
   }
 
   seedProducts(): Observable<any> {
