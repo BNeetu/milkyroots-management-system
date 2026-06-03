@@ -20,12 +20,20 @@ class Settings(BaseSettings):
 
     @property
     def async_database_url(self) -> str:
-        """Ensure the URL uses postgresql+asyncpg:// scheme."""
+        """Ensure the URL uses postgresql+asyncpg:// scheme and remove incompatible params."""
         url = self.DATABASE_URL
+        
+        # 1. Handle scheme replacement
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
         elif url.startswith("postgresql://") and "+asyncpg" not in url:
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            
+        # 2. Strip sslmode if present (asyncpg uses its own ssl logic and fails on this param)
+        if "sslmode=" in url:
+            import re
+            url = re.sub(r'[?&]sslmode=[^&]*', '', url)
+            
         return url
 
     # WhatsApp
