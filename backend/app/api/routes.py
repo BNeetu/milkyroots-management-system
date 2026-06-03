@@ -46,13 +46,18 @@ router_auth = APIRouter()
 
 @router_auth.post("/login", response_model=TokenResponse)
 async def login(form: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == form.username))
-    user = result.scalar_one_or_none()
-    if not user or not verify_password(form.password, user.hashed_pw):
-        notify_attempt("LOGIN", f"Failed attempt for email: {form.username}")
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    token = create_access_token({"sub": str(user.id), "name": user.name})
-    return TokenResponse(access_token=token, user_name=user.name, user_phone=user.phone)
+    try:
+        result = await db.execute(select(User).where(User.email == form.username))
+        user = result.scalar_one_or_none()
+        if not user or not verify_password(form.password, user.hashed_pw):
+            notify_attempt("LOGIN", f"Failed attempt for email: {form.username}")
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        token = create_access_token({"sub": str(user.id), "name": user.name})
+        return TokenResponse(access_token=token, user_name=user.name, user_phone=user.phone)
+    except Exception as e:
+        print(f"LOGIN ERROR: {str(e)}")
+        # Return the error in detail for troubleshooting
+        raise HTTPException(status_code=500, detail=f"Database or Server Error: {str(e)}")
 
 @router_auth.post("/register", response_model=TokenResponse, status_code=201)
 async def register(name: str, email: str, phone: str, password: str, db: AsyncSession = Depends(get_db)):
