@@ -5,6 +5,7 @@ App Configuration — reads from .env
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 from functools import lru_cache
+from typing import Optional
 import os
 
 class Settings(BaseSettings):
@@ -16,12 +17,21 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
 
     # Database (PostgreSQL)
+    # We check for both DATABASE_URL and POSTGRES_URL (common on Vercel)
     DATABASE_URL: str = "postgresql+asyncpg://milkyroots:password@localhost:5432/milkyroots_db"
+    POSTGRES_URL: Optional[str] = None
+
+    @property
+    def effective_database_url(self) -> str:
+        """Prioritize POSTGRES_URL if provided, else use DATABASE_URL."""
+        if self.POSTGRES_URL:
+            return self.POSTGRES_URL
+        return self.DATABASE_URL
 
     @property
     def async_database_url(self) -> str:
         """Ensure the URL uses postgresql+asyncpg:// scheme and remove incompatible params."""
-        url = self.DATABASE_URL
+        url = self.effective_database_url
         
         # 1. Handle scheme replacement
         if url.startswith("postgres://"):
