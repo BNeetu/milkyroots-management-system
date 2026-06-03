@@ -28,7 +28,7 @@ from app.schemas import (
     LoginRequest, TokenResponse,
     CustomerCreate, CustomerUpdate, CustomerOut, CustomerSummary,
     ProductCreate, ProductOut,
-    DeliveryCreate, DeliveryOut,
+    DeliveryCreate, DeliveryOut, DeliveryItemOut,
     PaymentCreate, PaymentOut,
     DashboardStats, DailyChecklistItem,
     SubscriptionProductOut,

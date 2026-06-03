@@ -20,11 +20,24 @@ from app.api.routes import customers, deliveries, products, payments, auth, dash
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """App startup/shutdown lifecycle."""
-    try:
-        await create_tables()
-    except Exception as e:
-        print(f"DATABASE ERROR during startup: {e}")
+    print(f"INFO: App starting up... DEBUG={settings.DEBUG}")
+    
+    # Only attempt to create tables if we're not using the default local DB URL
+    # or if we're in DEBUG mode. This prevents hanging on Vercel if DB is not configured.
+    is_default_db = "localhost" in settings.DATABASE_URL and not settings.DEBUG
+    
+    if not is_default_db:
+        try:
+            print("INFO: Attempting to connect to database and create tables...")
+            await create_tables()
+            print("INFO: Database initialization complete.")
+        except Exception as e:
+            print(f"ERROR: DATABASE ERROR during startup: {e}")
+    else:
+        print("INFO: Skipping auto-table creation (using default local DB URL).")
+        
     yield
+    print("INFO: App shutting down...")
 
 
 app = FastAPI(
