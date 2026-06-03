@@ -2,8 +2,12 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://milkyroots-backend-1sk1.vercel.app/api/$1"
+      "source": "/api/:path*/",
+      "destination": "https://milkyroots-backend-1sk1.vercel.app/api/:path*/"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://milkyroots-backend-1sk1.vercel.app/api/:path*/"
     },
     {
       "source": "/(.*)",
