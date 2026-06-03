@@ -45,7 +45,6 @@ app = FastAPI(
     description="Backend for MilkyRoots Dairy Delivery & Admin Dashboard",
     version="1.0.0",
     lifespan=lifespan,
-    redirect_slashes=False,
 )
 
 # ── CORS ──────────────────────────────────────────────
