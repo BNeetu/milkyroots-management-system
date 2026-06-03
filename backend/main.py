@@ -13,6 +13,7 @@ import os
 from datetime import datetime
 
 from app.core.database import create_tables
+from app.core.config import settings
 from app.api.routes import customers, deliveries, products, payments, auth, dashboard, special_requests
 
 

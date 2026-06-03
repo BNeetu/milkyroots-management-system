@@ -1,5 +1,10 @@
 {
+  "version": 2,
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://milkyroots-backend-8zvf.vercel.app/api/$1"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

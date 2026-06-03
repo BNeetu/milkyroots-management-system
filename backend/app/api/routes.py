@@ -67,6 +67,49 @@ async def register(name: str, email: str, phone: str, password: str, db: AsyncSe
     token = create_access_token({"sub": str(user.id)})
     return TokenResponse(access_token=token, user_name=user.name, user_phone=user.phone)
 
+@router_auth.get("/setup-first-time")
+async def setup_first_time(db: AsyncSession = Depends(get_db)):
+    """Initialize DB with admin user and products."""
+    created_user = None
+    # 1. Create User
+    existing = await db.execute(select(User).where(User.email == "admin@milkyroots.in"))
+    user = existing.scalar_one_or_none()
+    if not user:
+        user = User(
+            name="Neetu", 
+            email="admin@milkyroots.in", 
+            phone="918949553581", 
+            hashed_pw=hash_password("milky123")
+        )
+        db.add(user)
+        await db.flush()
+        created_user = "admin@milkyroots.in"
+    else:
+        created_user = "Already exists"
+    
+    # 2. Seed Products
+    defaults = [
+        {"name": "Fresh Cow Milk",   "name_hindi": "ताजा गाय का दूध", "unit": "L",  "price_per_unit": 70.0,   "min_qty": 0.5, "step_qty": 0.5, "emoji": "🥛"},
+        {"name": "Homemade Curd",    "name_hindi": "घर का दही",        "unit": "kg", "price_per_unit": 80.0,   "min_qty": 0.5, "step_qty": 0.5, "emoji": "🥣"},
+        {"name": "Fresh Buttermilk", "name_hindi": "ताजा छाछ",         "unit": "ml", "price_per_unit": 0.04,   "min_qty": 500, "step_qty": 500, "emoji": "🥤"},
+        {"name": "Bilona Ghee",      "name_hindi": "बिलोना घी",        "unit": "g",  "price_per_unit": 1.8,    "min_qty": 250, "step_qty": 250, "emoji": "✨"},
+    ]
+    seeded = []
+    for d in defaults:
+        existing_p = await db.execute(select(Product).where(Product.name == d["name"]))
+        if not existing_p.scalar_one_or_none():
+            db.add(Product(**d))
+            seeded.append(d["name"])
+            
+    await db.commit()
+    return {
+        "status": "success", 
+        "admin_user": created_user,
+        "login_email": "admin@milkyroots.in",
+        "login_password": "milky123",
+        "products_seeded": seeded
+    }
+
 # attach to module-level
 auth = type("R", (), {"router": router_auth})()
 
