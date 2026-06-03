@@ -42,6 +42,7 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
+    print(f"DEBUG: get_current_user called with token starting: {token[:10]}...")
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
@@ -50,13 +51,22 @@ async def get_current_user(
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str = payload.get("sub")
+        print(f"DEBUG: Token decoded successfully. User ID: {user_id}")
         if not user_id:
+            print("DEBUG: No 'sub' found in token payload")
             raise credentials_exception
-    except JWTError:
+    except JWTError as e:
+        print(f"DEBUG: JWT Decode Error: {str(e)}")
         raise credentials_exception
 
     result = await db.execute(select(User).where(User.id == int(user_id)))
     user = result.scalar_one_or_none()
-    if not user or not user.is_active:
+    if not user:
+        print(f"DEBUG: User with ID {user_id} not found in database")
         raise credentials_exception
+    if not user.is_active:
+        print(f"DEBUG: User {user_id} is inactive")
+        raise credentials_exception
+    
+    print(f"DEBUG: User {user.email} authenticated successfully")
     return user
