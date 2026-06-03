@@ -127,8 +127,11 @@ router_products = APIRouter()
 
 @router_products.get("/", response_model=List[ProductOut])
 async def list_products(db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+    print(f"DEBUG: list_products called by user: {_.email}")
     result = await db.execute(select(Product).where(Product.is_active == True))
-    return result.scalars().all()
+    prods = result.scalars().all()
+    print(f"DEBUG: Returning {len(prods)} products")
+    return prods
 
 @router_products.post("/", response_model=ProductOut, status_code=201)
 async def create_product(body: ProductCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):

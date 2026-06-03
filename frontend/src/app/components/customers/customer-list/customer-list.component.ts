@@ -19,6 +19,7 @@ import { Customer, CustomerCreate, Product, DeliverySlot } from '../../../models
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
           <input class="search-input" [(ngModel)]="searchQ" placeholder="🔍 Search name or area..."
             (input)="filterCustomers()">
+          <button class="btn btn-ghost btn-sm" (click)="loadProducts()">🔄 Reload Products</button>
           <button class="btn btn-blue" (click)="openModal()">+ Add Customer</button>
         </div>
       </div>
@@ -253,7 +254,14 @@ export class CustomerListComponent implements OnInit {
   }
 
   loadProducts() {
-    this.api.getProducts().subscribe({ next: p => this.products = p });
+    console.log('Fetching products...');
+    this.api.getProducts().subscribe({
+      next: p => {
+        console.log('Products loaded:', p);
+        this.products = p;
+      },
+      error: err => console.error('Failed to load products:', err)
+    });
   }
 
   loadCustomers() {
